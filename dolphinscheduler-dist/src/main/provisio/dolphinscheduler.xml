@@ -170,7 +170,7 @@
 
     <!-- Bring server tar.gz over for the RPM -->
     <artifactSet to="/">
-        <artifact id="${project.groupId}:dolphinscheduler:tar.gz:${project.version}">
+        <artifact id="${project.groupId}:dolphinscheduler-dist:zip:${project.version}">
             <unpack useRoot="true" />
         </artifact>
     </artifactSet>
