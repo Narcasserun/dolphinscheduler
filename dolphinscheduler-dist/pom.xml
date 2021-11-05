@@ -29,6 +29,9 @@
     <name>${project.artifactId}</name>
     <properties>
         <maven.deploy.skip>true</maven.deploy.skip>
+        <air.main.basedir>${project.parent.basedir}</air.main.basedir>
+
+        <server.tar.package>apache-dolphinscheduler-${project.version}</server.tar.package>
     </properties>
 
     <dependencies>
@@ -110,8 +113,8 @@
             </build>
         </profile>
 
-        <profile>
-            <id>rpmbuild</id>
+      <profile>
+            <id>rpmbuild2</id>
             <build>
                 <plugins>
                     <plugin>
@@ -154,7 +157,7 @@
                             <distribution>apache dolphinscheduler rpm</distribution>
                             <group>apache</group>
                             <packager>dolphinscheduler</packager>
-                            <!-- <version>${project.version}</version> -->
+                             <version>${project.version}</version>
                             <prefix>/opt/soft</prefix>
                             <autoRequires>false</autoRequires>
                             <defineStatements>
@@ -374,6 +377,51 @@
                                 <script>rm -rf /opt/soft/apache-dolphinscheduler-${project.version}</script>
                             </postremoveScriptlet>
                         </configuration>
+                    </plugin>
+
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>rpmbuild</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>ca.vanzyl.provisio.maven.plugins</groupId>
+                        <artifactId>provisio-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>unpack</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>provision</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${project.build.outputDirectory}</outputDirectory>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.codehaus.gmaven</groupId>
+                        <artifactId>groovy-maven-plugin</artifactId>
+                        <version>2.1.1</version>
+                        <executions>
+                            <execution>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>execute</goal>
+                                </goals>
+                                <configuration>
+                                    <source>${project.basedir}/src/main/script/symlink.groovy</source>
+                                    <properties>
+                                        <root>${project.build.outputDirectory}/${server.tar.package}</root>
+                                    </properties>
+                                </configuration>
+                            </execution>
+                        </executions>
                     </plugin>
 
                 </plugins>
