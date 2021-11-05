@@ -391,7 +391,7 @@
                                 <configuration>
                                     <source>${project.basedir}/src/main/script/symlink.groovy</source>
                                     <properties>
-                                        <root>${project.build.directory}/shared</root>
+                                        <root>${project.build.directory}</root>
                                     </properties>
                                 </configuration>
                             </execution>
