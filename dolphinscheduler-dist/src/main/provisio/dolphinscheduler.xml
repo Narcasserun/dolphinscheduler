@@ -169,9 +169,9 @@
     </artifactSet>
 
     <!-- Bring server tar.gz over for the RPM -->
-<!--    <artifactSet to="/">-->
-<!--        <artifact id="${project.groupId}:dolphinscheduler:tar.gz:${project.version}">-->
-<!--            <unpack useRoot="true" />-->
-<!--        </artifact>-->
-<!--    </artifactSet>-->
+    <artifactSet to="/">
+        <artifact id="${project.groupId}:dolphinscheduler:tar.gz:${project.version}">
+            <unpack useRoot="true" />
+        </artifact>
+    </artifactSet>
 </runtime>
