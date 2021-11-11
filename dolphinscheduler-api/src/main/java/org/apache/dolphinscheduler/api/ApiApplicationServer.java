@@ -17,8 +17,8 @@
 
 package org.apache.dolphinscheduler.api;
 
-import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.ServletComponentScan;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.context.annotation.ComponentScan;
@@ -35,7 +35,8 @@ import org.springframework.context.annotation.FilterType;
 public class ApiApplicationServer extends SpringBootServletInitializer {
 
     public static void main(String[] args) {
-        SpringApplication.run(ApiApplicationServer.class, args);
+        new SpringApplicationBuilder(ApiApplicationServer.class).profiles("api").run(args);
+        //SpringApplication.run(ApiApplicationServer.class, args);
     }
 
 }
