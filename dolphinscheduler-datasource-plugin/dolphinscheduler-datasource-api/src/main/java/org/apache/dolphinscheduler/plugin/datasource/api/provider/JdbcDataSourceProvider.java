@@ -45,6 +45,7 @@ public class JdbcDataSourceProvider {
 
         dataSource.setMinimumIdle(PropertyUtils.getInt(Constants.SPRING_DATASOURCE_MIN_IDLE, 5));
         dataSource.setMaximumPoolSize(PropertyUtils.getInt(Constants.SPRING_DATASOURCE_MAX_ACTIVE, 50));
+        dataSource.setConnectionTestQuery(properties.getValidationQuery());
 
         if (properties.getProps() != null) {
             properties.getProps().forEach(dataSource::addDataSourceProperty);
@@ -69,6 +70,7 @@ public class JdbcDataSourceProvider {
 
         dataSource.setMinimumIdle(1);
         dataSource.setMaximumPoolSize(1);
+        dataSource.setConnectionTestQuery(properties.getValidationQuery());
 
         if (properties.getProps() != null) {
             properties.getProps().forEach(dataSource::addDataSourceProperty);
