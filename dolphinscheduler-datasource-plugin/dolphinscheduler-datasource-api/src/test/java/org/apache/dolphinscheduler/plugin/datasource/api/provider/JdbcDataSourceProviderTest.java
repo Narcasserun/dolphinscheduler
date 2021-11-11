@@ -27,16 +27,16 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import com.alibaba.druid.pool.DruidDataSource;
+import com.zaxxer.hikari.HikariDataSource;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(value = {DruidDataSource.class, JdbcDataSourceProvider.class})
+@PrepareForTest(value = {HikariDataSource.class, JdbcDataSourceProvider.class})
 public class JdbcDataSourceProviderTest {
 
     @Test
     public void testCreateJdbcDataSource() {
         PowerMockito.mockStatic(JdbcDataSourceProvider.class);
-        DruidDataSource druidDataSource = PowerMockito.mock(DruidDataSource.class);
+        HikariDataSource druidDataSource = PowerMockito.mock(HikariDataSource.class);
         PowerMockito.when(JdbcDataSourceProvider.createJdbcDataSource(Mockito.any())).thenReturn(druidDataSource);
         Assert.assertNotNull(JdbcDataSourceProvider.createJdbcDataSource(new MysqlConnectionParam()));
     }
@@ -44,7 +44,7 @@ public class JdbcDataSourceProviderTest {
     @Test
     public void testCreateOneSessionJdbcDataSource() {
         PowerMockito.mockStatic(JdbcDataSourceProvider.class);
-        DruidDataSource druidDataSource = PowerMockito.mock(DruidDataSource.class);
+        HikariDataSource druidDataSource = PowerMockito.mock(HikariDataSource.class);
         PowerMockito.when(JdbcDataSourceProvider.createOneSessionJdbcDataSource(Mockito.any())).thenReturn(druidDataSource);
         Assert.assertNotNull(JdbcDataSourceProvider.createOneSessionJdbcDataSource(new MysqlConnectionParam()));
     }

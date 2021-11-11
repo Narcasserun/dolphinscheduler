@@ -16,22 +16,24 @@
  */
 package org.apache.dolphinscheduler.service.quartz;
 
-import com.alibaba.druid.pool.DruidDataSource;
 import org.apache.dolphinscheduler.service.bean.SpringApplicationContext;
-import org.quartz.utils.ConnectionProvider;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+
+import org.quartz.utils.ConnectionProvider;
+
+import com.zaxxer.hikari.HikariDataSource;
 
 /**
  * druid connection provider
  */
 public class DruidConnectionProvider implements ConnectionProvider {
 
-    private final DruidDataSource dataSource;
+    private final HikariDataSource dataSource;
 
     public DruidConnectionProvider(){
-        this.dataSource = SpringApplicationContext.getBean(DruidDataSource.class);
+        this.dataSource = SpringApplicationContext.getBean(HikariDataSource.class);
     }
 
     @Override
