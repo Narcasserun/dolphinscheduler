@@ -26,8 +26,12 @@ import org.springframework.context.annotation.FilterType;
 
 @SpringBootApplication
 @ServletComponentScan
-@ComponentScan(value = "org.apache.dolphinscheduler",
-        excludeFilters = @ComponentScan.Filter(type = FilterType.REGEX, pattern = "org.apache.dolphinscheduler.server.*"))
+@ComponentScan(value = "org.apache.dolphinscheduler", excludeFilters = {
+        @ComponentScan.Filter(type = FilterType.REGEX, pattern = {
+                "org.apache.dolphinscheduler.server.*",
+                "org.apache.dolphinscheduler.alert.*"
+        })
+})
 public class ApiApplicationServer extends SpringBootServletInitializer {
 
     public static void main(String[] args) {
