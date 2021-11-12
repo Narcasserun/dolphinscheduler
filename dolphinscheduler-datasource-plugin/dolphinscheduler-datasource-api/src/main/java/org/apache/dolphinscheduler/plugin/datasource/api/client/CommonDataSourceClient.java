@@ -112,7 +112,7 @@ public class CommonDataSourceClient implements DataSourceClient {
         try {
             return this.dataSource.getConnection();
         } catch (SQLException e) {
-            logger.error("get druidDataSource Connection fail SQLException: {}", e.getMessage(), e);
+            logger.error("get DataSource Connection fail SQLException: {}", e.getMessage(), e);
             return null;
         }
     }

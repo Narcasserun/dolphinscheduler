@@ -36,16 +36,16 @@ public class JdbcDataSourceProviderTest {
     @Test
     public void testCreateJdbcDataSource() {
         PowerMockito.mockStatic(JdbcDataSourceProvider.class);
-        HikariDataSource druidDataSource = PowerMockito.mock(HikariDataSource.class);
-        PowerMockito.when(JdbcDataSourceProvider.createJdbcDataSource(Mockito.any())).thenReturn(druidDataSource);
+        HikariDataSource dataSource = PowerMockito.mock(HikariDataSource.class);
+        PowerMockito.when(JdbcDataSourceProvider.createJdbcDataSource(Mockito.any())).thenReturn(dataSource);
         Assert.assertNotNull(JdbcDataSourceProvider.createJdbcDataSource(new MysqlConnectionParam()));
     }
 
     @Test
     public void testCreateOneSessionJdbcDataSource() {
         PowerMockito.mockStatic(JdbcDataSourceProvider.class);
-        HikariDataSource druidDataSource = PowerMockito.mock(HikariDataSource.class);
-        PowerMockito.when(JdbcDataSourceProvider.createOneSessionJdbcDataSource(Mockito.any())).thenReturn(druidDataSource);
+        HikariDataSource dataSource = PowerMockito.mock(HikariDataSource.class);
+        PowerMockito.when(JdbcDataSourceProvider.createOneSessionJdbcDataSource(Mockito.any())).thenReturn(dataSource);
         Assert.assertNotNull(JdbcDataSourceProvider.createOneSessionJdbcDataSource(new MysqlConnectionParam()));
     }
 

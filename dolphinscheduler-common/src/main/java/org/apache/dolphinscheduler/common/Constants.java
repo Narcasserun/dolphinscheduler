@@ -487,7 +487,17 @@ public final class Constants {
 
     public static final String SPRING_DATASOURCE_IS_AUTOCOMMIT = "spring.datasource.isAutoCommit";
 
-    public static final String DEVELOPMENT = "development";
+    public static final String SPRING_DATASOURCE_CACHE_PREP_STMTS = "spring.datasource.cachePrepStmts";
+
+    public static final String SPRING_DATASOURCE_PREP_STMT_CACHE_SIZE = "spring.datasource.prepStmtCacheSize";
+
+    public static final String SPRING_DATASOURCE_PREP_STMT_CACHE_SQL_LIMIT = "spring.datasource.prepStmtCacheSqlLimit";
+
+    public static final String CACHE_PREP_STMTS = "cachePrepStmts";
+
+    public static final String PREP_STMT_CACHE_SIZE = "prepStmtCacheSize";
+
+    public static final String PREP_STMT_CACHE_SQL_LIMIT = "prepStmtCacheSqlLimit";
 
     public static final String QUARTZ_PROPERTIES_PATH = "quartz.properties";
 

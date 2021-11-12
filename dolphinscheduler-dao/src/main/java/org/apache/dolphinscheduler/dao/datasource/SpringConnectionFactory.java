@@ -106,7 +106,7 @@ public class SpringConnectionFactory {
     /**
      * get the data source
      *
-     * @return druid dataSource
+     * @return dataSource
      */
     @Bean(destroyMethod = "", name = "datasource")
     public DataSource dataSource() throws SQLException {
@@ -131,10 +131,12 @@ public class SpringConnectionFactory {
         dataSource.setValidationTimeout(PropertyUtils.getInt(Constants.SPRING_DATASOURCE_VALIDATION_TIMEOUT, 5000));
         dataSource.setLeakDetectionThreshold(PropertyUtils.getInt(Constants.SPRING_DATASOURCE_LEAK_DETECTION_THRESHOLD, 0));
         dataSource.setInitializationFailTimeout(PropertyUtils.getInt(Constants.SPRING_DATASOURCE_INITIALIZATION_FAIL_TIMEOUT, 1));
+
         dataSource.setAutoCommit(PropertyUtils.getBoolean(Constants.SPRING_DATASOURCE_IS_AUTOCOMMIT, true));
-        dataSource.addDataSourceProperty("cachePrepStmts", true);
-        dataSource.addDataSourceProperty("prepStmtCacheSize", 250);
-        dataSource.addDataSourceProperty("prepStmtCacheSqlLimit", 2048);
+
+        dataSource.addDataSourceProperty(Constants.CACHE_PREP_STMTS, PropertyUtils.getBoolean(Constants.SPRING_DATASOURCE_CACHE_PREP_STMTS, true));
+        dataSource.addDataSourceProperty(Constants.PREP_STMT_CACHE_SIZE, PropertyUtils.getInt(Constants.SPRING_DATASOURCE_PREP_STMT_CACHE_SIZE, 250));
+        dataSource.addDataSourceProperty(Constants.PREP_STMT_CACHE_SQL_LIMIT, PropertyUtils.getInt(Constants.SPRING_DATASOURCE_PREP_STMT_CACHE_SQL_LIMIT, 2048));
 
         logger.info("Initialize DataSource DataSource success");
         return dataSource;
