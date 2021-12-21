@@ -17,11 +17,10 @@
 
 package org.apache.dolphinscheduler.plugin.datasource.api.utils;
 
-import org.apache.dolphinscheduler.plugin.datasource.api.datasource.mysql.MySQLConnectionParam;
-import org.apache.dolphinscheduler.plugin.datasource.api.datasource.mysql.MySQLDataSourceParamDTO;
-import org.apache.dolphinscheduler.plugin.datasource.api.datasource.mysql.MySQLDataSourceProcessor;
 import org.apache.dolphinscheduler.plugin.datasource.api.plugin.DataSourceClientProvider;
-import org.apache.dolphinscheduler.spi.datasource.ConnectionParam;
+import org.apache.dolphinscheduler.plugin.datasource.api.plugin.DataSourcePluginManager;
+import org.apache.dolphinscheduler.plugin.datasource.api.provider.DataSourceParam;
+import org.apache.dolphinscheduler.spi.datasource.JdbcConnectionParam;
 import org.apache.dolphinscheduler.spi.enums.DbType;
 import org.apache.dolphinscheduler.spi.utils.JSONUtils;
 
@@ -39,106 +38,55 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({Class.class, DriverManager.class, MySQLDataSourceProcessor.class, DataSourceClientProvider.class, PasswordUtils.class, CommonUtils.class})
+@PrepareForTest({Class.class, DriverManager.class, DataSourceClientProvider.class, PasswordUtils.class, CommonUtils.class})
 public class DataSourceUtilsTest {
 
     @Test
-    public void testCheckDatasourceParam() {
-        MySQLDataSourceParamDTO mysqlDatasourceParamDTO = new MySQLDataSourceParamDTO();
-        mysqlDatasourceParamDTO.setHost("localhost");
-        mysqlDatasourceParamDTO.setDatabase("default");
-        Map<String, String> other = new HashMap<>();
-        other.put("serverTimezone", "Asia/Shanghai");
-        other.put("queryTimeout", "-1");
-        other.put("characterEncoding", "utf8");
-        mysqlDatasourceParamDTO.setOther(other);
-        DataSourceUtils.checkDatasourceParam(mysqlDatasourceParamDTO);
-        Assert.assertTrue(true);
-    }
-
-    @Test
     public void testBuildConnectionParams() {
-        MySQLDataSourceParamDTO mysqlDatasourceParamDTO = new MySQLDataSourceParamDTO();
-        mysqlDatasourceParamDTO.setHost("localhost");
-        mysqlDatasourceParamDTO.setDatabase("default");
-        mysqlDatasourceParamDTO.setUserName("root");
-        mysqlDatasourceParamDTO.setPort(3306);
-        mysqlDatasourceParamDTO.setPassword("123456");
+        DataSourceParam mysqlDatasourceParam = new DataSourceParam();
+        mysqlDatasourceParam.setDbType(DbType.MYSQL);
+        Map<String, Object> props = new HashMap<>();
+        props.put("jdbcUrl", "jdbc:postgresql://172.16.133.200:3306/dolphinscheduler");
+        props.put("user", "mysql");
+        props.put("password", "123456");
+        mysqlDatasourceParam.setProps(props);
         PowerMockito.mockStatic(PasswordUtils.class);
         PowerMockito.when(PasswordUtils.encodePassword(Mockito.anyString())).thenReturn("123456");
         PowerMockito.mockStatic(CommonUtils.class);
         PowerMockito.when(CommonUtils.getKerberosStartupState()).thenReturn(false);
-        ConnectionParam connectionParam = DataSourceUtils.buildConnectionParams(mysqlDatasourceParamDTO);
+        JdbcConnectionParam connectionParam = DataSourceUtils.buildConnectionParams(mysqlDatasourceParam);
         Assert.assertNotNull(connectionParam);
     }
 
     @Test
     public void testBuildConnectionParams2() {
-        MySQLDataSourceParamDTO mysqlDatasourceParamDTO = new MySQLDataSourceParamDTO();
-        mysqlDatasourceParamDTO.setHost("localhost");
-        mysqlDatasourceParamDTO.setDatabase("default");
-        mysqlDatasourceParamDTO.setUserName("root");
-        mysqlDatasourceParamDTO.setPort(3306);
-        mysqlDatasourceParamDTO.setPassword("123456");
-        ConnectionParam connectionParam = DataSourceUtils.buildConnectionParams(DbType.MYSQL, JSONUtils.toJsonString(mysqlDatasourceParamDTO));
+        DataSourceParam mysqlDatasourceParam = new DataSourceParam();
+        mysqlDatasourceParam.setDbType(DbType.POSTGRESQL);
+        Map<String, Object> props = new HashMap<>();
+        props.put("jdbcUrl", "jdbc:mysql://172.16.133.200:5432/dolphinscheduler");
+        props.put("user", "postgres");
+        props.put("password", "");
+        mysqlDatasourceParam.setProps(props);
+        JdbcConnectionParam connectionParam = DataSourceUtils.buildConnectionParams(JSONUtils.toJsonString(mysqlDatasourceParam));
         Assert.assertNotNull(connectionParam);
     }
 
     @Test
     public void testGetConnection() {
 
-        PowerMockito.mockStatic(DataSourceClientProvider.class);
-        DataSourceClientProvider clientProvider = PowerMockito.mock(DataSourceClientProvider.class);
-        PowerMockito.when(DataSourceClientProvider.getInstance()).thenReturn(clientProvider);
+        PowerMockito.mock(DataSourcePluginManager.class);
+        DataSourcePluginManager dataSourcePluginManager = PowerMockito.mock(DataSourcePluginManager.class);
 
         Connection connection = PowerMockito.mock(Connection.class);
-        PowerMockito.when(clientProvider.getConnection(Mockito.any(), Mockito.any())).thenReturn(connection);
+        PowerMockito.when(dataSourcePluginManager.getConnection(Mockito.any())).thenReturn(connection);
 
-        MySQLConnectionParam connectionParam = new MySQLConnectionParam();
+        JdbcConnectionParam connectionParam = new JdbcConnectionParam();
         connectionParam.setUser("root");
         connectionParam.setPassword("123456");
-        connection = DataSourceClientProvider.getInstance().getConnection(DbType.MYSQL, connectionParam);
+        connection = dataSourcePluginManager.getConnection(connectionParam);
 
         Assert.assertNotNull(connection);
 
     }
 
-    @Test
-    public void testGetJdbcUrl() {
-        MySQLConnectionParam mysqlConnectionParam = new MySQLConnectionParam();
-        mysqlConnectionParam.setJdbcUrl("jdbc:mysql://localhost:3308");
-        String jdbcUrl = DataSourceUtils.getJdbcUrl(DbType.MYSQL, mysqlConnectionParam);
-        Assert.assertEquals("jdbc:mysql://localhost:3308?allowLoadLocalInfile=false&autoDeserialize=false&allowLocalInfile=false&allowUrlInLocalInfile=false",
-                jdbcUrl);
-    }
-
-    @Test
-    public void testBuildDatasourceParamDTO() {
-        MySQLConnectionParam connectionParam = new MySQLConnectionParam();
-        connectionParam.setJdbcUrl("jdbc:mysql://localhost:3308?allowLoadLocalInfile=false&autoDeserialize=false&allowLocalInfile=false&allowUrlInLocalInfile=false");
-        connectionParam.setAddress("jdbc:mysql://localhost:3308");
-        connectionParam.setUser("root");
-        connectionParam.setPassword("123456");
-
-        Assert.assertNotNull(DataSourceUtils.buildDatasourceParamDTO(DbType.MYSQL, JSONUtils.toJsonString(connectionParam)));
-
-    }
-
-    @Test
-    public void testGetDatasourceProcessor() {
-        Assert.assertNotNull(DataSourceUtils.getDatasourceProcessor(DbType.MYSQL));
-        Assert.assertNotNull(DataSourceUtils.getDatasourceProcessor(DbType.POSTGRESQL));
-        Assert.assertNotNull(DataSourceUtils.getDatasourceProcessor(DbType.HIVE));
-        Assert.assertNotNull(DataSourceUtils.getDatasourceProcessor(DbType.SPARK));
-        Assert.assertNotNull(DataSourceUtils.getDatasourceProcessor(DbType.CLICKHOUSE));
-        Assert.assertNotNull(DataSourceUtils.getDatasourceProcessor(DbType.ORACLE));
-        Assert.assertNotNull(DataSourceUtils.getDatasourceProcessor(DbType.SQLSERVER));
-        Assert.assertNotNull(DataSourceUtils.getDatasourceProcessor(DbType.DB2));
-        Assert.assertNotNull(DataSourceUtils.getDatasourceProcessor(DbType.PRESTO));
-    }
-
-    @Test(expected = Exception.class)
-    public void testGetDatasourceProcessorError() {
-        DataSourceUtils.getDatasourceProcessor(null);
-    }
 }

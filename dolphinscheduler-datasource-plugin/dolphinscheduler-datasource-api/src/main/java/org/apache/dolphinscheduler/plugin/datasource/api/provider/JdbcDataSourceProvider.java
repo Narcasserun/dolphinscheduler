@@ -17,9 +17,8 @@
 
 package org.apache.dolphinscheduler.plugin.datasource.api.provider;
 
-import org.apache.dolphinscheduler.plugin.datasource.api.utils.DataSourceUtils;
 import org.apache.dolphinscheduler.plugin.datasource.api.utils.PasswordUtils;
-import org.apache.dolphinscheduler.spi.datasource.BaseConnectionParam;
+import org.apache.dolphinscheduler.spi.datasource.JdbcConnectionParam;
 import org.apache.dolphinscheduler.spi.enums.DbType;
 import org.apache.dolphinscheduler.spi.utils.Constants;
 import org.apache.dolphinscheduler.spi.utils.PropertyUtils;
@@ -33,31 +32,31 @@ import org.slf4j.LoggerFactory;
 import com.zaxxer.hikari.HikariDataSource;
 
 /**
- * Jdbc Data Source Provider
+ * provider create Jdbc Data Source
  */
-public class JDBCDataSourceProvider {
+public class JdbcDataSourceProvider {
 
-    private static final Logger logger = LoggerFactory.getLogger(JDBCDataSourceProvider.class);
+    private static final Logger logger = LoggerFactory.getLogger(JdbcDataSourceProvider.class);
 
-    public static HikariDataSource createJdbcDataSource(BaseConnectionParam properties, DbType dbType) {
+    public static HikariDataSource createJdbcDataSource(JdbcConnectionParam connectionParam) {
         logger.info("Creating HikariDataSource pool for maxActive:{}", PropertyUtils.getInt(Constants.SPRING_DATASOURCE_MAX_ACTIVE, 50));
         HikariDataSource dataSource = new HikariDataSource();
 
         //TODO Support multiple versions of data sources
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        loaderJdbcDriver(classLoader, properties, dbType);
+        loaderJdbcDriver(classLoader, connectionParam);
 
-        dataSource.setDriverClassName(properties.getDriverClassName());
-        dataSource.setJdbcUrl(properties.getJdbcUrl());
-        dataSource.setUsername(properties.getUser());
-        dataSource.setPassword(PasswordUtils.decodePassword(properties.getPassword()));
+        dataSource.setDriverClassName(connectionParam.getDriverClassName());
+        dataSource.setJdbcUrl(connectionParam.getJdbcUrl());
+        dataSource.setUsername(connectionParam.getUser());
+        dataSource.setPassword(PasswordUtils.decodePassword(connectionParam.getPassword()));
 
         dataSource.setMinimumIdle(PropertyUtils.getInt(Constants.SPRING_DATASOURCE_MIN_IDLE, 5));
         dataSource.setMaximumPoolSize(PropertyUtils.getInt(Constants.SPRING_DATASOURCE_MAX_ACTIVE, 50));
-        dataSource.setConnectionTestQuery(properties.getValidationQuery());
+        dataSource.setConnectionTestQuery(connectionParam.getValidationQuery());
 
-        if (properties.getProps() != null) {
-            properties.getProps().forEach(dataSource::addDataSourceProperty);
+        if (connectionParam.getProps() != null) {
+            dataSource.setDataSourceProperties(connectionParam.getProps());
         }
 
         logger.info("Creating HikariDataSource pool success.");
@@ -67,42 +66,42 @@ public class JDBCDataSourceProvider {
     /**
      * @return One Session Jdbc DataSource
      */
-    public static HikariDataSource createOneSessionJdbcDataSource(BaseConnectionParam properties) {
+    public static HikariDataSource createOneSessionJdbcDataSource(JdbcConnectionParam connectionParam) {
         logger.info("Creating OneSession HikariDataSource pool for maxActive:{}", PropertyUtils.getInt(Constants.SPRING_DATASOURCE_MAX_ACTIVE, 50));
 
         HikariDataSource dataSource = new HikariDataSource();
 
-        dataSource.setDriverClassName(properties.getDriverClassName());
-        dataSource.setJdbcUrl(properties.getJdbcUrl());
-        dataSource.setUsername(properties.getUser());
-        dataSource.setPassword(PasswordUtils.decodePassword(properties.getPassword()));
+        dataSource.setDriverClassName(connectionParam.getDriverClassName());
+        dataSource.setJdbcUrl(connectionParam.getJdbcUrl());
+        dataSource.setUsername(connectionParam.getUser());
+        dataSource.setPassword(PasswordUtils.decodePassword(connectionParam.getPassword()));
 
         dataSource.setMinimumIdle(1);
         dataSource.setMaximumPoolSize(1);
-        dataSource.setConnectionTestQuery(properties.getValidationQuery());
+        dataSource.setConnectionTestQuery(connectionParam.getValidationQuery());
 
-        if (properties.getProps() != null) {
-            properties.getProps().forEach(dataSource::addDataSourceProperty);
+        if (connectionParam.getProps() != null) {
+            dataSource.setDataSourceProperties(connectionParam.getProps());
         }
 
         logger.info("Creating OneSession HikariDataSource pool success.");
         return dataSource;
     }
 
-    protected static void loaderJdbcDriver(ClassLoader classLoader, BaseConnectionParam properties, DbType dbType) {
-        String drv = StringUtils.isBlank(properties.getDriverClassName()) ? DataSourceUtils.getDatasourceProcessor(dbType).getDatasourceDriver() : properties.getDriverClassName();
+    protected static void loaderJdbcDriver(ClassLoader classLoader, JdbcConnectionParam connectionParam) {
+        String drv = StringUtils.isBlank(connectionParam.getDriverClassName()) ? connectionParam.getDbType().getDefaultDriverClass() : connectionParam.getDriverClassName();
         try {
             final Class<?> clazz = Class.forName(drv, true, classLoader);
             final Driver driver = (Driver) clazz.newInstance();
-            if (!driver.acceptsURL(properties.getJdbcUrl())) {
+            if (!driver.acceptsURL(connectionParam.getJdbcUrl())) {
                 logger.warn("Jdbc driver loading error. Driver {} cannot accept url.", drv);
                 throw new RuntimeException("Jdbc driver loading error.");
             }
-            if (dbType.equals(DbType.MYSQL)) {
+            if (connectionParam.getDbType().equals(DbType.MYSQL)) {
                 if (driver.getMajorVersion() >= 8) {
-                    properties.setDriverClassName(drv);
+                    connectionParam.setDriverClassName(drv);
                 } else {
-                    properties.setDriverClassName(Constants.COM_MYSQL_JDBC_DRIVER);
+                    connectionParam.setDriverClassName(Constants.COM_MYSQL_JDBC_DRIVER);
                 }
             }
         } catch (final Exception e) {

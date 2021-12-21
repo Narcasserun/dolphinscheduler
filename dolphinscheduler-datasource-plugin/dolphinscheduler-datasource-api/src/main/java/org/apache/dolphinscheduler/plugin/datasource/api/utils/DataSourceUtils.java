@@ -17,19 +17,13 @@
 
 package org.apache.dolphinscheduler.plugin.datasource.api.utils;
 
-import org.apache.dolphinscheduler.plugin.datasource.api.datasource.BaseDataSourceParamDTO;
-import org.apache.dolphinscheduler.plugin.datasource.api.datasource.DataSourceProcessor;
-import org.apache.dolphinscheduler.plugin.datasource.api.datasource.clickhouse.ClickHouseDataSourceProcessor;
-import org.apache.dolphinscheduler.plugin.datasource.api.datasource.db2.Db2DataSourceProcessor;
-import org.apache.dolphinscheduler.plugin.datasource.api.datasource.hive.HiveDataSourceProcessor;
-import org.apache.dolphinscheduler.plugin.datasource.api.datasource.mysql.MySQLDataSourceProcessor;
-import org.apache.dolphinscheduler.plugin.datasource.api.datasource.oracle.OracleDataSourceProcessor;
-import org.apache.dolphinscheduler.plugin.datasource.api.datasource.postgresql.PostgreSQLDataSourceProcessor;
-import org.apache.dolphinscheduler.plugin.datasource.api.datasource.presto.PrestoDataSourceProcessor;
-import org.apache.dolphinscheduler.plugin.datasource.api.datasource.spark.SparkDataSourceProcessor;
-import org.apache.dolphinscheduler.plugin.datasource.api.datasource.sqlserver.SQLServerDataSourceProcessor;
-import org.apache.dolphinscheduler.spi.datasource.ConnectionParam;
-import org.apache.dolphinscheduler.spi.enums.DbType;
+import org.apache.dolphinscheduler.plugin.datasource.api.provider.DataSourceParam;
+import org.apache.dolphinscheduler.spi.datasource.JdbcConnectionParam;
+import org.apache.dolphinscheduler.spi.utils.JSONUtils;
+import org.apache.dolphinscheduler.spi.utils.StringUtils;
+
+import java.util.Map;
+import java.util.Properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,80 +35,37 @@ public class DataSourceUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(DataSourceUtils.class);
 
-    private static final DataSourceProcessor mysqlProcessor = new MySQLDataSourceProcessor();
-    private static final DataSourceProcessor postgreSqlProcessor = new PostgreSQLDataSourceProcessor();
-    private static final DataSourceProcessor hiveProcessor = new HiveDataSourceProcessor();
-    private static final DataSourceProcessor sparkProcessor = new SparkDataSourceProcessor();
-    private static final DataSourceProcessor clickhouseProcessor = new ClickHouseDataSourceProcessor();
-    private static final DataSourceProcessor oracleProcessor = new OracleDataSourceProcessor();
-    private static final DataSourceProcessor sqlServerProcessor = new SQLServerDataSourceProcessor();
-    private static final DataSourceProcessor db2PROCESSOR = new Db2DataSourceProcessor();
-    private static final DataSourceProcessor prestoPROCESSOR = new PrestoDataSourceProcessor();
+    public static final String USER = "user";
+    public static final String PASSWORD = "password";
+    public static final String JDBC_URL = "jdbcUrl";
+    public static final String DRIVER_CLASS_NAME = "driverClassName";
+    public static final String PROPS = "props";
 
     /**
-     * check datasource param
+     * build JDBC connection parameters
      *
-     * @param baseDataSourceParamDTO datasource param
+     * @param dataSourceParam datasourceParam
      */
-    public static void checkDatasourceParam(BaseDataSourceParamDTO baseDataSourceParamDTO) {
-        getDatasourceProcessor(baseDataSourceParamDTO.getType()).checkDatasourceParam(baseDataSourceParamDTO);
-    }
-
-    /**
-     * build connection url
-     *
-     * @param baseDataSourceParamDTO datasourceParam
-     */
-    public static ConnectionParam buildConnectionParams(BaseDataSourceParamDTO baseDataSourceParamDTO) {
-        ConnectionParam connectionParams = getDatasourceProcessor(baseDataSourceParamDTO.getType())
-                .createConnectionParams(baseDataSourceParamDTO);
-        if (logger.isDebugEnabled()) {
-            logger.info("parameters map:{}", connectionParams);
+    public static JdbcConnectionParam buildConnectionParams(DataSourceParam dataSourceParam) {
+        JdbcConnectionParam jdbcConnectionParam = new JdbcConnectionParam();
+        jdbcConnectionParam.setDbType(dataSourceParam.getDbType());
+        jdbcConnectionParam.setJdbcUrl(dataSourceParam.getProps().get(JDBC_URL).toString());
+        jdbcConnectionParam.setUser(dataSourceParam.getProps().get(USER).toString());
+        jdbcConnectionParam.setPassword(PasswordUtils.encodePassword(dataSourceParam.getProps().get(PASSWORD).toString()));
+        String driverClassName = dataSourceParam.getProps().getOrDefault(DRIVER_CLASS_NAME, "").toString();
+        jdbcConnectionParam.setDriverClassName(StringUtils.isBlank(driverClassName) ? dataSourceParam.getDbType().getDefaultDriverClass() : driverClassName);
+        Object props = dataSourceParam.getProps().get(PROPS);
+        if (props != null) {
+            if (props instanceof Map) {
+                Properties properties = new Properties();
+                properties.putAll((Map) props);
+                jdbcConnectionParam.setProps(properties);
+            }
         }
-        return connectionParams;
+        return jdbcConnectionParam;
     }
 
-    public static ConnectionParam buildConnectionParams(DbType dbType, String connectionJson) {
-        return getDatasourceProcessor(dbType).createConnectionParams(connectionJson);
-    }
-
-    public static String getJdbcUrl(DbType dbType, ConnectionParam baseConnectionParam) {
-        return getDatasourceProcessor(dbType).getJdbcUrl(baseConnectionParam);
-    }
-
-    public static BaseDataSourceParamDTO buildDatasourceParamDTO(DbType dbType, String connectionParams) {
-        return getDatasourceProcessor(dbType).createDatasourceParamDTO(connectionParams);
-    }
-
-    public static DataSourceProcessor getDatasourceProcessor(DbType dbType) {
-        switch (dbType) {
-            case MYSQL:
-                return mysqlProcessor;
-            case POSTGRESQL:
-                return postgreSqlProcessor;
-            case HIVE:
-                return hiveProcessor;
-            case SPARK:
-                return sparkProcessor;
-            case CLICKHOUSE:
-                return clickhouseProcessor;
-            case ORACLE:
-                return oracleProcessor;
-            case SQLSERVER:
-                return sqlServerProcessor;
-            case DB2:
-                return db2PROCESSOR;
-            case PRESTO:
-                return prestoPROCESSOR;
-            default:
-                throw new IllegalArgumentException("datasource type illegal:" + dbType);
-        }
-    }
-
-    /**
-     * get datasource UniqueId
-     */
-    public static String getDatasourceUniqueId(ConnectionParam connectionParam, DbType dbType) {
-        return getDatasourceProcessor(dbType).getDatasourceUniqueId(connectionParam, dbType);
+    public static JdbcConnectionParam buildConnectionParams(String connectionJson) {
+        return JSONUtils.parseObject(connectionJson, JdbcConnectionParam.class);
     }
 }

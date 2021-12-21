@@ -17,15 +17,15 @@
 
 package org.apache.dolphinscheduler.plugin.datasource.hive;
 
+import static org.apache.dolphinscheduler.spi.task.TaskConstants.HADOOP_SECURITY_AUTHENTICATION_STARTUP_STATE;
 import static org.apache.dolphinscheduler.spi.task.TaskConstants.JAVA_SECURITY_KRB5_CONF;
 import static org.apache.dolphinscheduler.spi.task.TaskConstants.JAVA_SECURITY_KRB5_CONF_PATH;
-import static org.apache.dolphinscheduler.spi.task.TaskConstants.HADOOP_SECURITY_AUTHENTICATION_STARTUP_STATE;
 
 import org.apache.dolphinscheduler.plugin.datasource.api.client.CommonDataSourceClient;
-import org.apache.dolphinscheduler.plugin.datasource.api.provider.JDBCDataSourceProvider;
+import org.apache.dolphinscheduler.plugin.datasource.api.exception.DataSourceException;
+import org.apache.dolphinscheduler.plugin.datasource.api.provider.JdbcDataSourceProvider;
 import org.apache.dolphinscheduler.plugin.datasource.utils.CommonUtil;
-import org.apache.dolphinscheduler.spi.datasource.BaseConnectionParam;
-import org.apache.dolphinscheduler.spi.enums.DbType;
+import org.apache.dolphinscheduler.spi.datasource.JdbcConnectionParam;
 import org.apache.dolphinscheduler.spi.utils.Constants;
 import org.apache.dolphinscheduler.spi.utils.PropertyUtils;
 import org.apache.dolphinscheduler.spi.utils.StringUtils;
@@ -58,8 +58,8 @@ public class HiveDataSourceClient extends CommonDataSourceClient {
     protected HikariDataSource oneSessionDataSource;
     private UserGroupInformation ugi;
 
-    public HiveDataSourceClient(BaseConnectionParam baseConnectionParam, DbType dbType) {
-        super(baseConnectionParam, dbType);
+    public HiveDataSourceClient(JdbcConnectionParam connectionParam) {
+        super(connectionParam);
     }
 
     @Override
@@ -69,22 +69,22 @@ public class HiveDataSourceClient extends CommonDataSourceClient {
     }
 
     @Override
-    protected void initClient(BaseConnectionParam baseConnectionParam, DbType dbType) {
+    protected void initClient(JdbcConnectionParam connectionParam) {
         logger.info("Create Configuration for hive configuration.");
         this.hadoopConf = createHadoopConf();
         logger.info("Create Configuration success.");
 
         logger.info("Create UserGroupInformation.");
-        this.ugi = createUserGroupInformation(baseConnectionParam.getUser());
+        this.ugi = createUserGroupInformation(connectionParam.getUser());
         logger.info("Create ugi success.");
 
-        super.initClient(baseConnectionParam, dbType);
-        this.oneSessionDataSource = JDBCDataSourceProvider.createOneSessionJdbcDataSource(baseConnectionParam);
+        super.initClient(connectionParam);
+        this.oneSessionDataSource = JdbcDataSourceProvider.createOneSessionJdbcDataSource(connectionParam);
         logger.info("Init {} success.", getClass().getName());
     }
 
     @Override
-    protected void checkEnv(BaseConnectionParam baseConnectionParam) {
+    protected void checkEnv(JdbcConnectionParam baseConnectionParam) {
         super.checkEnv(baseConnectionParam);
         checkKerberosEnv();
     }
@@ -101,7 +101,7 @@ public class HiveDataSourceClient extends CommonDataSourceClient {
                 field.setAccessible(true);
                 field.set(null, Config.getInstance().getDefaultRealm());
             } catch (Exception e) {
-                throw new RuntimeException("Update Kerberos environment failed.", e);
+                throw DataSourceException.getInstance("Update Kerberos environment failed.", e);
             }
         }
     }
@@ -130,7 +130,7 @@ public class HiveDataSourceClient extends CommonDataSourceClient {
             }, 5, 5, TimeUnit.MINUTES);
             return ugi;
         } catch (IOException e) {
-            throw new RuntimeException("createUserGroupInformation fail. ", e);
+            throw DataSourceException.getInstance("createUserGroupInformation fail. ", e);
         }
     }
 
