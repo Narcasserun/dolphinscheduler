@@ -39,6 +39,10 @@ public class JdbcDriverManager {
 
     private final Map<String, SortedMap<String, String>> jdbcDrivers = new HashMap<>();
 
+    public JdbcDriverManager() {
+        init();
+    }
+
     private static class JdbcDriverManagerHolder {
         private static final JdbcDriverManager INSTANCE = new JdbcDriverManager();
     }
