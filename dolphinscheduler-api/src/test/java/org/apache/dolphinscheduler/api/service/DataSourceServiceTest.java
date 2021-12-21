@@ -349,7 +349,7 @@ public class DataSourceServiceTest {
         props.put("props", other);
         dataSourceParam.setProps(props);
         JdbcConnectionParam connectionParam = DataSourceUtils.buildConnectionParams(dataSourceParam);
-        String expected = "{\"dbType\":\"MYSQL\",\"jdbcUrl\":\"jdbc:mysql://172.16.133.200:3306/dolphinscheduler\",\"user\":\"test\",\"password\":\"123456\",\"driverClassName\":\"com.mysql.jdbc.Driver\",\"props\":{\"autoDeserialize\":\"yes\",\"allowUrlInLocalInfile\":\"true\"}}";
+        String expected = "{\"dbType\":\"MYSQL\",\"jdbcUrl\":\"jdbc:mysql://172.16.133.200:3306/dolphinscheduler\",\"user\":\"test\",\"password\":\"IUAjJCVeJipNVEl6TkRVMg==\",\"driverClassName\":\"com.mysql.jdbc.Driver\",\"props\":{\"autoDeserialize\":\"yes\",\"allowUrlInLocalInfile\":\"true\"}}";
         Assert.assertEquals(expected, JSONUtils.toJsonString(connectionParam));
 
         PropertyUtils.setValue(Constants.DATASOURCE_ENCRYPTION_ENABLE, "false");
