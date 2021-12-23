@@ -19,6 +19,7 @@ package org.apache.dolphinscheduler.plugin.datasource.api.plugin;
 
 import org.apache.dolphinscheduler.plugin.datasource.api.exception.DataSourceException;
 import org.apache.dolphinscheduler.plugin.datasource.api.utils.ClassLoaderUtils;
+import org.apache.dolphinscheduler.plugin.datasource.api.utils.ThreadContextClassLoader;
 import org.apache.dolphinscheduler.spi.datasource.DataSourceChannelFactory;
 import org.apache.dolphinscheduler.spi.datasource.DataSourceClient;
 import org.apache.dolphinscheduler.spi.datasource.JdbcConnectionParam;
@@ -54,15 +55,19 @@ public class DataSourceClientProvider {
         checkDriverLocation(connectionParam);
 
         logger.info("Creating the ClassLoader for the jdbc driver and plugin.");
-        ClassLoader driverClassLoader = getDriverClassLoader(connectionParam);
-
-        ClassLoader threadClassLoader = Thread.currentThread().getContextClassLoader();
-        try {
-            Thread.currentThread().setContextClassLoader(driverClassLoader);
-            return createDataSourceClientWithClassLoader(connectionParam, driverClassLoader);
-        } finally {
-            Thread.currentThread().setContextClassLoader(threadClassLoader);
+        try (ThreadContextClassLoader ignored = new ThreadContextClassLoader(getDriverClassLoader(connectionParam))) {
+            return createDataSourceClientWithClassLoader(connectionParam);
         }
+
+//        ClassLoader driverClassLoader = getDriverClassLoader(connectionParam);
+//
+//        ClassLoader threadClassLoader = Thread.currentThread().getContextClassLoader();
+//        try {
+//            Thread.currentThread().setContextClassLoader(driverClassLoader);
+//            return createDataSourceClientWithClassLoader(connectionParam, driverClassLoader);
+//        } finally {
+//            Thread.currentThread().setContextClassLoader(threadClassLoader);
+//        }
 
     }
 
@@ -158,8 +163,8 @@ public class DataSourceClientProvider {
         }
     }
 
-    private static DataSourceClient createDataSourceClientWithClassLoader(JdbcConnectionParam connectionParam, ClassLoader classLoader) {
-        ServiceLoader<DataSourceChannelFactory> serviceLoader = ServiceLoader.load(DataSourceChannelFactory.class, classLoader);
+    private static DataSourceClient createDataSourceClientWithClassLoader(JdbcConnectionParam connectionParam) {
+        ServiceLoader<DataSourceChannelFactory> serviceLoader = ServiceLoader.load(DataSourceChannelFactory.class);
         List<DataSourceChannelFactory> plugins = ImmutableList.copyOf(serviceLoader);
         Preconditions.checkState(!plugins.isEmpty(), "No service providers the plugin %s", DataSourceClient.class.getName());
         DataSourceClient dataSourceClient = null;
