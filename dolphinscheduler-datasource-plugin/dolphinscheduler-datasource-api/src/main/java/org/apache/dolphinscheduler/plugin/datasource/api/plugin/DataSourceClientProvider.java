@@ -19,8 +19,7 @@ package org.apache.dolphinscheduler.plugin.datasource.api.plugin;
 
 import org.apache.dolphinscheduler.plugin.datasource.api.exception.DataSourceException;
 import org.apache.dolphinscheduler.plugin.datasource.api.utils.ClassLoaderUtils;
-import org.apache.dolphinscheduler.plugin.datasource.api.utils.ReflectionUtils;
-import org.apache.dolphinscheduler.spi.datasource.DataSourceChannel;
+import org.apache.dolphinscheduler.plugin.datasource.api.utils.ThreadContextClassLoader;
 import org.apache.dolphinscheduler.spi.datasource.DataSourceChannelFactory;
 import org.apache.dolphinscheduler.spi.datasource.DataSourceClient;
 import org.apache.dolphinscheduler.spi.datasource.JdbcConnectionParam;
@@ -35,9 +34,7 @@ import java.sql.Driver;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.ServiceLoader;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,43 +46,19 @@ import com.google.common.collect.Sets;
 public class DataSourceClientProvider {
     private static final Logger logger = LoggerFactory.getLogger(DataSourceClientProvider.class);
 
-    private static final String BASE_PACKAGE = "org.apache.dolphinscheduler.plugin.datasource";
-    private static final Map<String, DataSourceClient> uniqueId2dataSourceClientMap = new ConcurrentHashMap<>();
-    private static final Map<String, DataSourceChannel> datasourceChannelMap = new ConcurrentHashMap<>();
     private static final JdbcDriverManager jdbcDriverManagerInstance = JdbcDriverManager.getInstance();
-
-
-//    public Connection getConnection(JdbcConnectionParam jdbcConnectionParam) {
-//        String datasourceUniqueId = jdbcConnectionParam.getDatasourceUniqueId();
-//        logger.info("getConnection datasourceUniqueId {}", datasourceUniqueId);
-//
-//        DataSourceClient dataSourceClient = uniqueId2dataSourceClientMap.computeIfAbsent(datasourceUniqueId, $ -> {
-//            Map<String, DataSourceChannel> dataSourceChannelMap = dataSourcePluginManager.getDataSourceChannelMap();
-//            DataSourceChannel dataSourceChannel = dataSourceChannelMap.get(jdbcConnectionParam.getDbType().getDescp());
-//            if (null == dataSourceChannel) {
-//                throw DataSourceException.getInstance(String.format("datasource plugin '%s' is not found", jdbcConnectionParam.getDbType().getDescp()));
-//            }
-//            return dataSourceChannel.createDataSourceClient(jdbcConnectionParam);
-//        });
-//        return dataSourceClient.getConnection();
-//    }
 
     public static DataSourceClient createDataSourceClient(JdbcConnectionParam connectionParam) {
         logger.info("Creating the createDataSourceClient. JdbcUrl: {} ", connectionParam.getJdbcUrl());
         //Check jdbc driver location
         checkDriverLocation(connectionParam);
         logger.info("Creating the ClassLoader for the jdbc driver and plugin.");
-        ClassLoader driverClassLoader = getDriverClassLoader(connectionParam);
+        //ClassLoader driverClassLoader = getDriverClassLoader(connectionParam);
 
-        ClassLoader threadClassLoader = Thread.currentThread().getContextClassLoader();
-        try {
-            Thread.currentThread().setContextClassLoader(driverClassLoader);
-
-            //return createDataSourceClientWithClassLoader(connectionParam, driverClassLoader);
-            return loadPlugin(driverClassLoader, connectionParam);
-        } finally {
-            Thread.currentThread().setContextClassLoader(threadClassLoader);
+        try (ThreadContextClassLoader threadContextClassLoader = new ThreadContextClassLoader(getDriverClassLoader(connectionParam))) {
+            return createDataSourceClientWithClassLoader(threadContextClassLoader.getClass().getClassLoader(), connectionParam);
         }
+
     }
 
     protected static void checkDriverLocation(JdbcConnectionParam connectionParam) {
@@ -124,7 +97,8 @@ public class DataSourceClientProvider {
                 Class.forName("org.apache.hadoop.security.UserGroupInformation", true, classLoader);
                 Class.forName("org.apache.hadoop.fs.FileSystem", true, classLoader);
             } catch (ClassNotFoundException cnf) {
-                paths.add(JdbcDriverManager.getInstance().getHadoopClientPath());
+                //paths.add(JdbcDriverManager.getInstance().getHadoopClientPath());
+                cnf.printStackTrace();
             }
         }
 
@@ -139,8 +113,6 @@ public class DataSourceClientProvider {
 
     /**
      * Actively load driver and register, If it cannot be loaded, the driver is loaded through SPI
-     * @param classLoader
-     * @param connectionParam
      */
     protected static void loadJdbcDriver(ClassLoader classLoader, JdbcConnectionParam connectionParam) {
         Boolean loaded;
@@ -181,47 +153,7 @@ public class DataSourceClientProvider {
         }
     }
 
-    protected static DataSourceClient createDataSourceClientWithClassLoader(JdbcConnectionParam connectionParam, ClassLoader classLoader) {
-
-        Class<?> dataSourceClientClass;
-        DataSourceClient dataSourceClient;
-        try {
-            switch (connectionParam.getDbType()) {
-                case MYSQL:
-                    dataSourceClientClass = Class.forName(String.format("%sMysqlDataSourceClient", BASE_PACKAGE), true, classLoader);
-                    break;
-                case POSTGRESQL:
-                    dataSourceClientClass = Class.forName(String.format("%sPostgreSQLDataSourceClient", BASE_PACKAGE), true, classLoader);
-                    break;
-                case HIVE:
-                case SPARK:
-                    dataSourceClientClass = Class.forName(String.format("%sHiveDataSourceClient", BASE_PACKAGE), true, classLoader);
-                    break;
-                case CLICKHOUSE:
-                    dataSourceClientClass = Class.forName(String.format("%sClickhouseDataSourceClient", BASE_PACKAGE), true, classLoader);
-                    break;
-                case ORACLE:
-                    dataSourceClientClass = Class.forName(String.format("%sOracleDataSourceClient", BASE_PACKAGE), true, classLoader);
-                    break;
-                case SQLSERVER:
-                    dataSourceClientClass = Class.forName(String.format("%sSqlserverDataSourceClient", BASE_PACKAGE), true, classLoader);
-                    break;
-                case DB2:
-                    dataSourceClientClass = Class.forName(String.format("%sDB2DataSourceClient", BASE_PACKAGE), true, classLoader);
-                    break;
-                default:
-                    throw DataSourceException.getInstance(String.format("datasource plugin '%s' is not found", connectionParam.getDbType().getDescp()));
-            }
-            logger.info("Reflection: {}", dataSourceClientClass);
-            dataSourceClient = (DataSourceClient) ReflectionUtils.newInstance(dataSourceClientClass, connectionParam);
-        } catch (Exception e) {
-            throw DataSourceException.getInstance("Datasource plugin initialize fail", e);
-        }
-        logger.info("Create DataSourceClient {} for {} success.", connectionParam.getJdbcUrl(), connectionParam.getDbType().getDescp());
-        return dataSourceClient;
-    }
-
-    private static DataSourceClient loadPlugin(ClassLoader driverClassLoader, JdbcConnectionParam connectionParam) {
+    private static DataSourceClient createDataSourceClientWithClassLoader(ClassLoader driverClassLoader, JdbcConnectionParam connectionParam) {
         ServiceLoader<DataSourceChannelFactory> serviceLoader = ServiceLoader.load(DataSourceChannelFactory.class, driverClassLoader);
         List<DataSourceChannelFactory> plugins = ImmutableList.copyOf(serviceLoader);
         Preconditions.checkState(!plugins.isEmpty(), "No service providers the plugin %s", DataSourceClient.class.getName());

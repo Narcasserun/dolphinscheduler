@@ -20,9 +20,7 @@ package org.apache.dolphinscheduler.plugin.datasource.hive;
 import org.apache.dolphinscheduler.spi.datasource.DataSourceChannel;
 import org.apache.dolphinscheduler.spi.datasource.DataSourceChannelFactory;
 
-import com.google.auto.service.AutoService;
-
-@AutoService(DataSourceChannelFactory.class)
+//@AutoService(DataSourceChannelFactory.class)
 public class HiveDataSourceChannelFactory implements DataSourceChannelFactory {
     @Override
     public String getName() {
