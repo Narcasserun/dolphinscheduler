@@ -55,8 +55,8 @@ public class DataSourceClientProvider {
         logger.info("Creating the ClassLoader for the jdbc driver and plugin.");
         //ClassLoader driverClassLoader = getDriverClassLoader(connectionParam);
 
-        try (ThreadContextClassLoader threadContextClassLoader = new ThreadContextClassLoader(getDriverClassLoader(connectionParam))) {
-            return createDataSourceClientWithClassLoader(threadContextClassLoader.getClass().getClassLoader(), connectionParam);
+        try (ThreadContextClassLoader ignored = new ThreadContextClassLoader(getDriverClassLoader(connectionParam))) {
+            return createDataSourceClientWithClassLoader(connectionParam);
         }
 
     }
@@ -153,8 +153,8 @@ public class DataSourceClientProvider {
         }
     }
 
-    private static DataSourceClient createDataSourceClientWithClassLoader(ClassLoader driverClassLoader, JdbcConnectionParam connectionParam) {
-        ServiceLoader<DataSourceChannelFactory> serviceLoader = ServiceLoader.load(DataSourceChannelFactory.class, driverClassLoader);
+    private static DataSourceClient createDataSourceClientWithClassLoader(JdbcConnectionParam connectionParam) {
+        ServiceLoader<DataSourceChannelFactory> serviceLoader = ServiceLoader.load(DataSourceChannelFactory.class);
         List<DataSourceChannelFactory> plugins = ImmutableList.copyOf(serviceLoader);
         Preconditions.checkState(!plugins.isEmpty(), "No service providers the plugin %s", DataSourceClient.class.getName());
         DataSourceClient dataSourceClient = null;
