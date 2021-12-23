@@ -35,6 +35,7 @@ public class DataSourcePluginManager {
     public static Connection getConnection(JdbcConnectionParam jdbcConnectionParam) {
         String datasourceUniqueId = jdbcConnectionParam.getDatasourceUniqueId();
         logger.info("getConnection datasourceUniqueId {}", datasourceUniqueId);
+
         DataSourceClient dataSourceClient = uniqueId2dataSourceClientMap.computeIfAbsent(datasourceUniqueId, $ ->
                 DataSourceClientProvider.createDataSourceClient(jdbcConnectionParam));
         return dataSourceClient.getConnection();
