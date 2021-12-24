@@ -87,7 +87,6 @@
                     <groupId>log4j</groupId>
                 </exclusion>
             </exclusions>
-            <scope>provided</scope>
         </dependency>
 
         <dependency>
@@ -315,7 +314,6 @@
                     <artifactId>jackson-databind</artifactId>
                 </exclusion>
             </exclusions>
-            <scope>provided</scope>
         </dependency>
 
         <dependency>
