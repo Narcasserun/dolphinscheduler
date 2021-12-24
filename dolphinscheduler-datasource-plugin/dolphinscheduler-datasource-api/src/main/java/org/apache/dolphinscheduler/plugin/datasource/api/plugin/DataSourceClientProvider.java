@@ -59,16 +59,6 @@ public class DataSourceClientProvider {
             return createDataSourceClientWithClassLoader(connectionParam);
         }
 
-//        ClassLoader driverClassLoader = getDriverClassLoader(connectionParam);
-//
-//        ClassLoader threadClassLoader = Thread.currentThread().getContextClassLoader();
-//        try {
-//            Thread.currentThread().setContextClassLoader(driverClassLoader);
-//            return createDataSourceClientWithClassLoader(connectionParam, driverClassLoader);
-//        } finally {
-//            Thread.currentThread().setContextClassLoader(threadClassLoader);
-//        }
-
     }
 
     protected static void checkDriverLocation(JdbcConnectionParam connectionParam) {
@@ -107,7 +97,6 @@ public class DataSourceClientProvider {
                 Class.forName("org.apache.hadoop.security.UserGroupInformation", true, classLoader);
                 Class.forName("org.apache.hadoop.fs.FileSystem", true, classLoader);
             } catch (ClassNotFoundException cnf) {
-                //paths.add(JdbcDriverManager.getInstance().getHadoopClientPath());
                 cnf.printStackTrace();
             }
         }
