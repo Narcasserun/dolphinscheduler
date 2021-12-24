@@ -42,7 +42,7 @@ import com.google.common.collect.Sets;
 public class DataSourceClientProvider {
     private static final Logger logger = LoggerFactory.getLogger(DataSourceClientProvider.class);
 
-    private static final String BASE_PACKAGE = "org.apache.dolphinscheduler.plugin.datasource";
+    private static final String BASE_PACKAGE = "org.apache.dolphinscheduler.plugin.datasource."+"hive";
     private static final JdbcDriverManager jdbcDriverManagerInstance = JdbcDriverManager.getInstance();
 
     public static DataSourceClient createDataSourceClient(JdbcConnectionParam connectionParam) {
@@ -178,14 +178,14 @@ public class DataSourceClientProvider {
         try {
             switch (connectionParam.getDbType()) {
                 case MYSQL:
-                    dataSourceClientClass = Class.forName(String.format("%sMysqlDataSourceClient", BASE_PACKAGE), true, classLoader);
+                    dataSourceClientClass = Class.forName("org.apache.dolphinscheduler.plugin.datasource.mysql.MySQLDataSourceClient", true, classLoader);
                     break;
                 case POSTGRESQL:
                     dataSourceClientClass = Class.forName(String.format("%sPostgreSQLDataSourceClient", BASE_PACKAGE), true, classLoader);
                     break;
                 case HIVE:
                 case SPARK:
-                    dataSourceClientClass = Class.forName(String.format("%sHiveDataSourceClient", BASE_PACKAGE), true, classLoader);
+                    dataSourceClientClass = Class.forName("org.apache.dolphinscheduler.plugin.datasource.hive.HiveDataSourceClient", true, classLoader);
                     break;
                 case CLICKHOUSE:
                     dataSourceClientClass = Class.forName(String.format("%sClickhouseDataSourceClient", BASE_PACKAGE), true, classLoader);
