@@ -55,8 +55,8 @@ public class DataSourceClientProvider {
         checkDriverLocation(connectionParam);
 
         logger.info("Creating the ClassLoader for the jdbc driver and plugin.");
-        try (ThreadContextClassLoader threadContextClassLoader = new ThreadContextClassLoader(getDriverClassLoader(connectionParam))) {
-            return createDataSourceClientWithClassLoader(connectionParam, threadContextClassLoader.getClass().getClassLoader());
+        try (ThreadContextClassLoader ignored = new ThreadContextClassLoader(getDriverClassLoader(connectionParam))) {
+            return createDataSourceClientWithClassLoader(connectionParam);
         }
 
     }
@@ -106,7 +106,7 @@ public class DataSourceClientProvider {
         } catch (final MalformedURLException e) {
             throw DataSourceException.getInstance("Plugin classpath init error.");
         }
-        logger.info("Create InstanceClassLoader Success {}", classLoader.toString());
+        logger.info("Create PluginClassLoader Success {}", classLoader.toString());
         return classLoader;
     }
 
@@ -152,8 +152,8 @@ public class DataSourceClientProvider {
         }
     }
 
-    private static DataSourceClient createDataSourceClientWithClassLoader(JdbcConnectionParam connectionParam, ClassLoader classLoader) {
-        ServiceLoader<DataSourceChannelFactory> serviceLoader = ServiceLoader.load(DataSourceChannelFactory.class, classLoader);
+    private static DataSourceClient createDataSourceClientWithClassLoader(JdbcConnectionParam connectionParam) {
+        ServiceLoader<DataSourceChannelFactory> serviceLoader = ServiceLoader.load(DataSourceChannelFactory.class);
         List<DataSourceChannelFactory> plugins = ImmutableList.copyOf(serviceLoader);
         Preconditions.checkState(!plugins.isEmpty(), "No service providers the plugin %s", DataSourceClient.class.getName());
         DataSourceClient dataSourceClient = null;
