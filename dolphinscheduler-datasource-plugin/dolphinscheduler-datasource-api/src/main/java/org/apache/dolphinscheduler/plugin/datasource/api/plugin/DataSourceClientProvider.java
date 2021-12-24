@@ -19,7 +19,6 @@ package org.apache.dolphinscheduler.plugin.datasource.api.plugin;
 
 import org.apache.dolphinscheduler.plugin.datasource.api.exception.DataSourceException;
 import org.apache.dolphinscheduler.plugin.datasource.api.utils.ClassLoaderUtils;
-import org.apache.dolphinscheduler.plugin.datasource.api.utils.ThreadContextClassLoader;
 import org.apache.dolphinscheduler.spi.datasource.DataSourceChannelFactory;
 import org.apache.dolphinscheduler.spi.datasource.DataSourceClient;
 import org.apache.dolphinscheduler.spi.datasource.JdbcConnectionParam;
@@ -55,9 +54,19 @@ public class DataSourceClientProvider {
         checkDriverLocation(connectionParam);
 
         logger.info("Creating the ClassLoader for the jdbc driver and plugin.");
-        try (ThreadContextClassLoader ignored = new ThreadContextClassLoader(getDriverClassLoader(connectionParam))) {
+        ClassLoader driverClassLoader = getDriverClassLoader(connectionParam);
+
+        ClassLoader threadClassLoader = Thread.currentThread().getContextClassLoader();
+
+        try {
+            Thread.currentThread().setContextClassLoader(driverClassLoader);
             return createDataSourceClientWithClassLoader(connectionParam);
+        } finally {
+            Thread.currentThread().setContextClassLoader(threadClassLoader);
         }
+//        try (ThreadContextClassLoader ignored = new ThreadContextClassLoader()) {
+//            return createDataSourceClientWithClassLoader(connectionParam);
+//        }
 
     }
 
