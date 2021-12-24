@@ -19,7 +19,7 @@ package org.apache.dolphinscheduler.plugin.datasource.api.plugin;
 
 import org.apache.dolphinscheduler.plugin.datasource.api.exception.DataSourceException;
 import org.apache.dolphinscheduler.plugin.datasource.api.utils.ClassLoaderUtils;
-import org.apache.dolphinscheduler.spi.datasource.DataSourceChannelFactory;
+import org.apache.dolphinscheduler.plugin.datasource.api.utils.ReflectionUtils;
 import org.apache.dolphinscheduler.spi.datasource.DataSourceClient;
 import org.apache.dolphinscheduler.spi.datasource.JdbcConnectionParam;
 import org.apache.dolphinscheduler.spi.enums.DbType;
@@ -32,19 +32,17 @@ import java.security.PrivilegedAction;
 import java.sql.Driver;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.ServiceLoader;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 
 public class DataSourceClientProvider {
     private static final Logger logger = LoggerFactory.getLogger(DataSourceClientProvider.class);
 
+    private static final String BASE_PACKAGE = "org.apache.dolphinscheduler.plugin.datasource";
     private static final JdbcDriverManager jdbcDriverManagerInstance = JdbcDriverManager.getInstance();
 
     public static DataSourceClient createDataSourceClient(JdbcConnectionParam connectionParam) {
@@ -60,7 +58,7 @@ public class DataSourceClientProvider {
 
         try {
             Thread.currentThread().setContextClassLoader(driverClassLoader);
-            return createDataSourceClientWithClassLoader(connectionParam);
+            return createDataSourceClientWithClassLoader(connectionParam, driverClassLoader);
         } finally {
             Thread.currentThread().setContextClassLoader(threadClassLoader);
         }
@@ -161,15 +159,55 @@ public class DataSourceClientProvider {
         }
     }
 
-    private static DataSourceClient createDataSourceClientWithClassLoader(JdbcConnectionParam connectionParam) {
-        ServiceLoader<DataSourceChannelFactory> serviceLoader = ServiceLoader.load(DataSourceChannelFactory.class);
-        List<DataSourceChannelFactory> plugins = ImmutableList.copyOf(serviceLoader);
-        Preconditions.checkState(!plugins.isEmpty(), "No service providers the plugin %s", DataSourceClient.class.getName());
-        DataSourceClient dataSourceClient = null;
-        for (DataSourceChannelFactory dataSourceChannelFactory : plugins) {
-            logger.info("Installing {}", dataSourceChannelFactory.getClass().getName());
-            dataSourceClient = dataSourceChannelFactory.create().createDataSourceClient(connectionParam);
+//    private static DataSourceClient createDataSourceClientWithClassLoader(JdbcConnectionParam connectionParam) {
+//        ServiceLoader<DataSourceChannelFactory> serviceLoader = ServiceLoader.load(DataSourceChannelFactory.class);
+//        List<DataSourceChannelFactory> plugins = ImmutableList.copyOf(serviceLoader);
+//        Preconditions.checkState(!plugins.isEmpty(), "No service providers the plugin %s", DataSourceClient.class.getName());
+//        DataSourceClient dataSourceClient = null;
+//        for (DataSourceChannelFactory dataSourceChannelFactory : plugins) {
+//            logger.info("Installing {}", dataSourceChannelFactory.getClass().getName());
+//            dataSourceClient = dataSourceChannelFactory.create().createDataSourceClient(connectionParam);
+//        }
+//        return dataSourceClient;
+//    }
+
+    protected static DataSourceClient createDataSourceClientWithClassLoader(JdbcConnectionParam connectionParam, ClassLoader classLoader) {
+
+        Class<?> dataSourceClientClass;
+        DataSourceClient dataSourceClient;
+        try {
+            switch (connectionParam.getDbType()) {
+                case MYSQL:
+                    dataSourceClientClass = Class.forName(String.format("%sMysqlDataSourceClient", BASE_PACKAGE), true, classLoader);
+                    break;
+                case POSTGRESQL:
+                    dataSourceClientClass = Class.forName(String.format("%sPostgreSQLDataSourceClient", BASE_PACKAGE), true, classLoader);
+                    break;
+                case HIVE:
+                case SPARK:
+                    dataSourceClientClass = Class.forName(String.format("%sHiveDataSourceClient", BASE_PACKAGE), true, classLoader);
+                    break;
+                case CLICKHOUSE:
+                    dataSourceClientClass = Class.forName(String.format("%sClickhouseDataSourceClient", BASE_PACKAGE), true, classLoader);
+                    break;
+                case ORACLE:
+                    dataSourceClientClass = Class.forName(String.format("%sOracleDataSourceClient", BASE_PACKAGE), true, classLoader);
+                    break;
+                case SQLSERVER:
+                    dataSourceClientClass = Class.forName(String.format("%sSqlserverDataSourceClient", BASE_PACKAGE), true, classLoader);
+                    break;
+                case DB2:
+                    dataSourceClientClass = Class.forName(String.format("%sDB2DataSourceClient", BASE_PACKAGE), true, classLoader);
+                    break;
+                default:
+                    throw DataSourceException.getInstance(String.format("datasource plugin '%s' is not found", connectionParam.getDbType().getDescp()));
+            }
+            logger.info("Reflection: {}", dataSourceClientClass);
+            dataSourceClient = (DataSourceClient) ReflectionUtils.newInstance(dataSourceClientClass, connectionParam);
+        } catch (Exception e) {
+            throw DataSourceException.getInstance("Datasource plugin initialize fail", e);
         }
+        logger.info("Create DataSourceClient {} for {} success.", connectionParam.getJdbcUrl(), connectionParam.getDbType().getDescp());
         return dataSourceClient;
     }
 }
