@@ -17,19 +17,19 @@
 
 package org.apache.dolphinscheduler.plugin.datasource.api.provider;
 
-import org.apache.dolphinscheduler.plugin.datasource.api.utils.PasswordUtils;
+import org.apache.dolphinscheduler.plugin.datasource.api.exception.DataSourceException;
 import org.apache.dolphinscheduler.spi.datasource.JdbcConnectionParam;
 import org.apache.dolphinscheduler.spi.enums.DbType;
 import org.apache.dolphinscheduler.spi.utils.Constants;
 import org.apache.dolphinscheduler.spi.utils.PropertyUtils;
 import org.apache.dolphinscheduler.spi.utils.StringUtils;
 
+import org.apache.commons.dbcp2.BasicDataSource;
+
 import java.sql.Driver;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.alibaba.druid.pool.DruidDataSource;
 
 /**
  * provider create Jdbc Data Source
@@ -38,52 +38,81 @@ public class JdbcDataSourceProvider2 {
 
     private static final Logger logger = LoggerFactory.getLogger(JdbcDataSourceProvider2.class);
 
-    public static DruidDataSource createJdbcDataSource(JdbcConnectionParam connectionParam) {
+    public static BasicDataSource createJdbcDataSource(JdbcConnectionParam connectionParam) {
         logger.info("Creating DruidDataSource pool for maxActive:{}", PropertyUtils.getInt(Constants.SPRING_DATASOURCE_MAX_ACTIVE, 50));
+        BasicDataSource dataSource = new BasicDataSource();
 
-        DruidDataSource druidDataSource = new DruidDataSource();
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        Driver driver = getDataSourceDriver(connectionParam, classLoader);
 
-        druidDataSource.setDriverClassName(connectionParam.getDriverClassName());
-        druidDataSource.setUrl(connectionParam.getJdbcUrl());
-        druidDataSource.setUsername(connectionParam.getUser());
-        druidDataSource.setPassword(PasswordUtils.decodePassword(connectionParam.getPassword()));
+        dataSource.setDriverClassLoader(classLoader);
+        if (driver != null) {
+            dataSource.setDriver(driver);
+        }
+        dataSource.setDriverClassName(connectionParam.getDriverClassName());
+        dataSource.setUrl(connectionParam.getJdbcUrl());
+        dataSource.setUsername(connectionParam.getUser());
+        dataSource.setPassword(connectionParam.getPassword());
 
-        druidDataSource.setMinIdle(PropertyUtils.getInt(Constants.SPRING_DATASOURCE_MIN_IDLE, 5));
-        druidDataSource.setMaxActive(PropertyUtils.getInt(Constants.SPRING_DATASOURCE_MAX_ACTIVE, 50));
-        druidDataSource.setTestOnBorrow(PropertyUtils.getBoolean(Constants.SPRING_DATASOURCE_TEST_ON_BORROW, false));
+        dataSource.setMaxWaitMillis(PropertyUtils.getInt(Constants.SPRING_DATASOURCE_MAX_ACTIVE, 50));
+        dataSource.setMaxTotal(PropertyUtils.getInt(Constants.SPRING_DATASOURCE_MAX_ACTIVE, 50));
+        dataSource.setMinIdle(PropertyUtils.getInt(Constants.SPRING_DATASOURCE_MIN_IDLE, 5));
+        dataSource.setMaxIdle(PropertyUtils.getInt(Constants.SPRING_DATASOURCE_MIN_IDLE, 5));
+//        dataSource.setMaxConnLifetimeMillis(poolConfig.getMaxConnLifetimeMillis());
+//        dataSource.setTimeBetweenEvictionRunsMillis(poolConfig.getTimeBetweenEvictionRunsMillis());
+//        dataSource.setMinEvictableIdleTimeMillis(poolConfig.getMinEvictableIdleTimeMillis());
+//        dataSource.setSoftMinEvictableIdleTimeMillis(poolConfig.getSoftMinEvictableIdleTimeMillis());
+
+        dataSource.setValidationQuery("select 1");
+        dataSource.setTestOnBorrow(true);
+
+//        basicDataSource.setDriverClassLoader();
+//        druidDataSource.setDriverClassName(connectionParam.getDriverClassName());
+//        druidDataSource.setUrl(connectionParam.getJdbcUrl());
+//        druidDataSource.setUsername(connectionParam.getUser());
+//        druidDataSource.setPassword(PasswordUtils.decodePassword(connectionParam.getPassword()));
+//
+//        druidDataSource.setMinIdle();
+//        druidDataSource.setMaxActive();
+//        druidDataSource.setTestOnBorrow(PropertyUtils.getBoolean(Constants.SPRING_DATASOURCE_TEST_ON_BORROW, false));
 
         if (connectionParam.getProps() != null) {
-            druidDataSource.setConnectProperties(connectionParam.getProps());
+            //connectionParam.getProps().forEach(dataSource::addConnectionProperty);
         }
 
         logger.info("Creating HikariDataSource pool success.");
-        return druidDataSource;
+        return dataSource;
     }
 
     /**
      * @return One Session Jdbc DataSource
      */
-    public static DruidDataSource createOneSessionJdbcDataSource(JdbcConnectionParam connectionParam) {
-        logger.info("Creating OneSession DruidDataSource pool for maxActive:{}", PropertyUtils.getInt(Constants.SPRING_DATASOURCE_MAX_ACTIVE, 50));
+    public static BasicDataSource createOneSessionJdbcDataSource(JdbcConnectionParam connectionParam) {
+        logger.info("Creating DruidDataSource pool for maxActive:{}", PropertyUtils.getInt(Constants.SPRING_DATASOURCE_MAX_ACTIVE, 50));
+        BasicDataSource dataSource = new BasicDataSource();
 
-        DruidDataSource druidDataSource = new DruidDataSource();
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        Driver driver = getDataSourceDriver(connectionParam, classLoader);
 
-        druidDataSource.setDriverClassName(connectionParam.getDriverClassName());
-        druidDataSource.setUrl(connectionParam.getJdbcUrl());
-        druidDataSource.setUsername(connectionParam.getUser());
-        druidDataSource.setPassword(PasswordUtils.decodePassword(connectionParam.getPassword()));
-
-        druidDataSource.setMinIdle(1);
-        druidDataSource.setMaxActive(1);
-        druidDataSource.setTestOnBorrow(true);
-
-        if (connectionParam.getProps() != null) {
-            druidDataSource.setConnectProperties(connectionParam.getProps());
+        dataSource.setDriverClassLoader(classLoader);
+        if (driver != null) {
+            dataSource.setDriver(driver);
         }
+        dataSource.setDriverClassName(connectionParam.getDriverClassName());
+        dataSource.setUrl(connectionParam.getJdbcUrl());
+        dataSource.setUsername(connectionParam.getUser());
+        dataSource.setPassword(connectionParam.getPassword());
 
-
+        dataSource.setMaxTotal(1);
+        dataSource.setMinIdle(1);
+        dataSource.setMaxIdle(1);
+        dataSource.setValidationQuery("select 1");
+        dataSource.setTestOnBorrow(true);
+        if (connectionParam.getProps() != null) {
+            //connectionParam.getProps().forEach(dataSource::addConnectionProperty);
+        }
         logger.info("Creating OneSession HikariDataSource pool success.");
-        return druidDataSource;
+        return dataSource;
     }
 
     protected static void loaderJdbcDriver(ClassLoader classLoader, JdbcConnectionParam connectionParam) {
@@ -107,4 +136,14 @@ public class JdbcDataSourceProvider2 {
         }
     }
 
+    private static Driver getDataSourceDriver(JdbcConnectionParam connectionParam, ClassLoader classLoader) {
+        Driver driver;
+        try {
+            final Class<?> clazz = Class.forName(connectionParam.getDriverClassName(), true, classLoader);
+            driver = (Driver) clazz.newInstance();
+        } catch (Exception e) {
+            throw DataSourceException.getInstance("Jdbc driver init error.", e);
+        }
+        return driver;
+    }
 }

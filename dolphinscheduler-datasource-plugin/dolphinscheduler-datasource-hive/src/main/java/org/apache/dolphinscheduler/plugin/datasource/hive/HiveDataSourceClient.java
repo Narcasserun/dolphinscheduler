@@ -30,6 +30,7 @@ import org.apache.dolphinscheduler.spi.utils.Constants;
 import org.apache.dolphinscheduler.spi.utils.PropertyUtils;
 import org.apache.dolphinscheduler.spi.utils.StringUtils;
 
+import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 
@@ -44,8 +45,6 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.alibaba.druid.pool.DruidDataSource;
-
 import sun.security.krb5.Config;
 
 public class HiveDataSourceClient extends CommonDataSourceClient {
@@ -55,7 +54,7 @@ public class HiveDataSourceClient extends CommonDataSourceClient {
     private ScheduledExecutorService kerberosRenewalService;
 
     private Configuration hadoopConf;
-    protected DruidDataSource oneSessionDataSource;
+    protected BasicDataSource oneSessionDataSource;
     private UserGroupInformation ugi;
 
     public HiveDataSourceClient(JdbcConnectionParam connectionParam) {
@@ -162,7 +161,11 @@ public class HiveDataSourceClient extends CommonDataSourceClient {
         kerberosRenewalService.shutdown();
         this.ugi = null;
 
-        this.oneSessionDataSource.close();
+        try {
+            this.oneSessionDataSource.close();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
         this.oneSessionDataSource = null;
     }
 }
