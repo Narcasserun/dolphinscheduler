@@ -60,7 +60,7 @@
             <directory>${basedir}/../dolphinscheduler-datasource-plugin/dolphinscheduler-datasource-hive/target/
             </directory>
             <includes>
-                <include>dolphinscheduler-datasource-hive-*.jar</include>
+                <include>dolphinscheduler-datasource-hive-${project.version}.jar</include>
             </includes>
             <outputDirectory>./plugin/hive/</outputDirectory>
         </fileSet>
@@ -70,7 +70,7 @@
             <directory>${basedir}/../dolphinscheduler-datasource-plugin/dolphinscheduler-datasource-mysql/target/
             </directory>
             <includes>
-                <include>dolphinscheduler-datasource-mysql-*.jar</include>
+                <include>dolphinscheduler-datasource-mysql-${project.version}.jar</include>
             </includes>
             <outputDirectory>./plugin/mysql/</outputDirectory>
         </fileSet>
