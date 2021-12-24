@@ -96,11 +96,9 @@
             <scope>provided</scope>
         </dependency>
 
-
         <dependency>
             <groupId>org.apache.hive</groupId>
             <artifactId>hive-jdbc</artifactId>
-            <version>${hive.jdbc.version}</version>
             <exclusions>
                 <exclusion>
                     <artifactId>slf4j-log4j12</artifactId>
@@ -181,6 +179,7 @@
                     <groupId>com.google.protobuf</groupId>
                     <artifactId>protobuf-java</artifactId>
                 </exclusion>
+
                 <exclusion>
                     <groupId>org.json</groupId>
                     <artifactId>json</artifactId>
@@ -305,15 +304,8 @@
                     <artifactId>jasper-compiler</artifactId>
                     <groupId>tomcat</groupId>
                 </exclusion>
-                <exclusion>
-                    <groupId>com.fasterxml.jackson.core</groupId>
-                    <artifactId>jackson-annotations</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.fasterxml.jackson.core</groupId>
-                    <artifactId>jackson-databind</artifactId>
-                </exclusion>
             </exclusions>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
