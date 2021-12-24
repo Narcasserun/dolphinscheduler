@@ -23,7 +23,7 @@ import static org.apache.dolphinscheduler.spi.task.TaskConstants.JAVA_SECURITY_K
 
 import org.apache.dolphinscheduler.plugin.datasource.api.client.CommonDataSourceClient;
 import org.apache.dolphinscheduler.plugin.datasource.api.exception.DataSourceException;
-import org.apache.dolphinscheduler.plugin.datasource.api.provider.JdbcDataSourceProvider;
+import org.apache.dolphinscheduler.plugin.datasource.api.provider.JdbcDataSourceProvider2;
 import org.apache.dolphinscheduler.plugin.datasource.utils.CommonUtil;
 import org.apache.dolphinscheduler.spi.datasource.JdbcConnectionParam;
 import org.apache.dolphinscheduler.spi.utils.Constants;
@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.zaxxer.hikari.HikariDataSource;
+import com.alibaba.druid.pool.DruidDataSource;
 
 import sun.security.krb5.Config;
 
@@ -55,7 +55,7 @@ public class HiveDataSourceClient extends CommonDataSourceClient {
     private ScheduledExecutorService kerberosRenewalService;
 
     private Configuration hadoopConf;
-    protected HikariDataSource oneSessionDataSource;
+    protected DruidDataSource oneSessionDataSource;
     private UserGroupInformation ugi;
 
     public HiveDataSourceClient(JdbcConnectionParam connectionParam) {
@@ -79,7 +79,7 @@ public class HiveDataSourceClient extends CommonDataSourceClient {
         logger.info("Create ugi success.");
 
         super.initClient(connectionParam);
-        this.oneSessionDataSource = JdbcDataSourceProvider.createOneSessionJdbcDataSource(connectionParam);
+        this.oneSessionDataSource = JdbcDataSourceProvider2.createOneSessionJdbcDataSource(connectionParam);
         logger.info("Init {} success.", getClass().getName());
     }
 
