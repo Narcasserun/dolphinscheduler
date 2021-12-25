@@ -26,10 +26,6 @@ if [[ -z "$DOLPHINSCHEDULER_PLUGIN_OPTS" ]]; then
   PLUGIN_OPTS="-Ddolphinscheduler.plugin.dir=$PLUGIN_DIR"
 fi
 
-if [[ -z "$DOLPHINSCHEDULER_JDBC_OPTS" ]]; then
-  JDBC_OPTS="-Ddolphinscheduler.jdbc.dir=$JDBC_DRIVER_DIR"
-fi
-
 source "$BIN_DIR/dolphinscheduler_env.sh"
 
 JAVA_OPTS=${JAVA_OPTS:-"-server -Xms1g -Xmx1g -Xmn512m -XX:+PrintGCDetails -Xloggc:gc.log -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=dump.hprof"}
@@ -38,6 +34,6 @@ if [[ "$DOCKER" == "true" ]]; then
   JAVA_OPTS="${JAVA_OPTS} -XX:-UseContainerSupport"
 fi
 
-java $JAVA_OPTS $PLUGIN_OPTS $JDBC_OPTS\
+java $JAVA_OPTS $PLUGIN_OPTS \
   -cp "$DOLPHINSCHEDULER_HOME/conf":"$DOLPHINSCHEDULER_HOME/libs/*" \
   org.apache.dolphinscheduler.api.ApiApplicationServer

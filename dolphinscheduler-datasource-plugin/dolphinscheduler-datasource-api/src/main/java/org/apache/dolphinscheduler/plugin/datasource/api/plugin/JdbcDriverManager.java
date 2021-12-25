@@ -20,30 +20,14 @@ package org.apache.dolphinscheduler.plugin.datasource.api.plugin;
 import org.apache.dolphinscheduler.spi.enums.DbType;
 import org.apache.dolphinscheduler.spi.utils.StringUtils;
 
-import org.apache.commons.collections.MapUtils;
-
-import java.io.File;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
-
 public class JdbcDriverManager {
 
     /**
      * datasource plugin dir
      */
     public final String pluginPath = System.getProperty("dolphinscheduler.plugin.dir");
-    /**
-     * datasource jdbc dir
-     */
-    public final String jdbcDir = System.getProperty("dolphinscheduler.jdbc.dir");
-
-    private final Map<String, SortedMap<String, String>> jdbcDrivers = new HashMap<>();
 
     public JdbcDriverManager() {
-        init();
     }
 
     private static class JdbcDriverManagerHolder {
@@ -55,41 +39,14 @@ public class JdbcDriverManager {
     }
 
     /**
-     * Storage of driver package
-     */
-    public void init() {
-        if (jdbcDir != null) {
-            File pluginRoot = new File(jdbcDir);
-            File[] typeNames = pluginRoot.listFiles(File::isDirectory);
-            if (typeNames != null) {
-                for (File type : typeNames) {
-                    String typeName = type.getName();
-                    SortedMap<String, String> inner = jdbcDrivers.computeIfAbsent(typeName, k -> new TreeMap<>());
-                    File[] jdbcFiles = type.listFiles(File::isFile);
-                    if (jdbcFiles != null) {
-                        Arrays.sort(jdbcFiles);
-                        for (File jdbc : jdbcFiles) {
-                            String jdbcName = jdbc.getName();
-                            inner.put(jdbcName, jdbc.getAbsolutePath());
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    /**
      * DefaultDriver Plugin Path
      */
     public String getDefaultDriverPluginPath(String typeName) {
-        SortedMap<String, String> drivers = jdbcDrivers.get(typeName);
-        if (MapUtils.isEmpty(drivers)) {
-            if (StringUtils.equalsIgnoreCase(typeName, DbType.HIVE.getDescp())) {
-                return String.format("%s/jdbc", getHiveEnv());
-            }
-            return null;
+        if (StringUtils.equalsIgnoreCase(typeName, DbType.HIVE.getDescp())
+                || StringUtils.equalsIgnoreCase(typeName, DbType.SPARK.getDescp())) {
+            return String.format("%s/jdbc", getHiveEnv());
         }
-        return drivers.get(drivers.firstKey());
+        return null;
     }
 
     public String getPluginPath(DbType type) {
