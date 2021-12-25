@@ -18,14 +18,12 @@
 package org.apache.dolphinscheduler.plugin.datasource.hive;
 
 import static org.apache.dolphinscheduler.spi.task.TaskConstants.JAVA_SECURITY_KRB5_CONF;
-import static org.apache.dolphinscheduler.spi.task.TaskConstants.JAVA_SECURITY_KRB5_CONF_PATH;
 
 import org.apache.dolphinscheduler.plugin.datasource.api.client.CommonDataSourceClient;
 import org.apache.dolphinscheduler.plugin.datasource.api.exception.DataSourceException;
 import org.apache.dolphinscheduler.plugin.datasource.api.provider.JdbcDataSourceProvider;
 import org.apache.dolphinscheduler.plugin.datasource.utils.CommonUtil;
 import org.apache.dolphinscheduler.spi.datasource.JdbcConnectionParam;
-import org.apache.dolphinscheduler.spi.utils.PropertyUtils;
 import org.apache.dolphinscheduler.spi.utils.StringUtils;
 
 import org.apache.hadoop.conf.Configuration;
@@ -82,15 +80,14 @@ public class HiveDataSourceClient extends CommonDataSourceClient {
     }
 
     @Override
-    protected void checkEnv(JdbcConnectionParam baseConnectionParam) {
-        super.checkEnv(baseConnectionParam);
-        checkKerberosEnv();
+    protected void checkEnv(JdbcConnectionParam connectionParam) {
+        super.checkEnv(connectionParam);
+        checkKerberosEnv(connectionParam);
     }
 
-    private void checkKerberosEnv() {
-        String krb5File = PropertyUtils.getString(JAVA_SECURITY_KRB5_CONF_PATH);
-        if (StringUtils.isNotBlank(krb5File)) {
-            System.setProperty(JAVA_SECURITY_KRB5_CONF, krb5File);
+    private void checkKerberosEnv(JdbcConnectionParam connectionParam) {
+        if (StringUtils.isNotBlank(connectionParam.getKerberosKrb5Conf())) {
+            System.setProperty(JAVA_SECURITY_KRB5_CONF, connectionParam.getKerberosKrb5Conf());
             try {
                 Config.refresh();
                 Class<?> kerberosName = Class.forName("org.apache.hadoop.security.authentication.util.KerberosName");
