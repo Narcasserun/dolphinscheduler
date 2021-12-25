@@ -77,4 +77,8 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <finalName>dolphinscheduler-datasource-clickhouse-${project.version}</finalName>
+    </build>
 </project>

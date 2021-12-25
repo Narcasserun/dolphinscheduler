@@ -62,4 +62,8 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <finalName>dolphinscheduler-datasource-sqlserver-${project.version}</finalName>
+    </build>
 </project>

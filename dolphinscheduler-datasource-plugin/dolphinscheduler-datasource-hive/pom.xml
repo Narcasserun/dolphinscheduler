@@ -315,4 +315,8 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <finalName>dolphinscheduler-datasource-hive-${project.version}</finalName>
+    </build>
 </project>

@@ -20,6 +20,8 @@ package org.apache.dolphinscheduler.plugin.datasource.api.plugin;
 import org.apache.dolphinscheduler.spi.enums.DbType;
 import org.apache.dolphinscheduler.spi.utils.StringUtils;
 
+import org.apache.commons.collections.MapUtils;
+
 import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -82,8 +84,8 @@ public class JdbcDriverManager {
     public String getDefaultDriverPluginPath(String typeName) {
         SortedMap<String, String> drivers = jdbcDrivers.get(typeName);
         String envDriverPath = String.format("%s/jdbc", getHiveEnv());
-        if (StringUtils.equalsIgnoreCase(typeName, DbType.HIVE.getDescp())) {
-            return StringUtils.isBlank(drivers.get(drivers.firstKey())) ? envDriverPath : drivers.get(drivers.firstKey());
+        if (MapUtils.isEmpty(drivers) && StringUtils.equalsIgnoreCase(typeName, DbType.HIVE.getDescp())) {
+            return envDriverPath;
         }
         return drivers.get(drivers.firstKey());
     }

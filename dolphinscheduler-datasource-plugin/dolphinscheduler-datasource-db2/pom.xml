@@ -51,4 +51,8 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <finalName>dolphinscheduler-datasource-db2-${project.version}</finalName>
+    </build>
 </project>

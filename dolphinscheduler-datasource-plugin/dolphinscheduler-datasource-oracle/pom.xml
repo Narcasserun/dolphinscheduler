@@ -51,4 +51,8 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <finalName>dolphinscheduler-datasource-oracle-${project.version}</finalName>
+    </build>
 </project>

@@ -58,4 +58,8 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <finalName>dolphinscheduler-datasource-mysql-${project.version}</finalName>
+    </build>
 </project>
