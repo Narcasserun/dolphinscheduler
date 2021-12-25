@@ -38,7 +38,7 @@ import org.apache.dolphinscheduler.common.utils.CommonUtils;
 import org.apache.dolphinscheduler.common.utils.ParameterUtils;
 import org.apache.dolphinscheduler.dao.entity.User;
 import org.apache.dolphinscheduler.plugin.datasource.api.provider.DataSourceParam;
-import org.apache.dolphinscheduler.plugin.datasource.api.utils.DataSourceUtils;
+import org.apache.dolphinscheduler.plugin.datasource.api.provider.JdbcDataSourceProvider;
 import org.apache.dolphinscheduler.spi.datasource.JdbcConnectionParam;
 import org.apache.dolphinscheduler.spi.enums.DbType;
 
@@ -210,7 +210,7 @@ public class DataSourceController extends BaseController {
     @AccessLogAnnotation(ignoreRequestArgs = "loginUser")
     public Result connectDataSource(@ApiIgnore @RequestAttribute(value = Constants.SESSION_USER) User loginUser,
                                     @RequestBody DataSourceParam dataSourceParam) {
-        JdbcConnectionParam connectionParams = DataSourceUtils.buildConnectionParams(dataSourceParam);
+        JdbcConnectionParam connectionParams = JdbcDataSourceProvider.buildConnectionParams(dataSourceParam);
         return dataSourceService.checkConnection(connectionParams);
     }
 

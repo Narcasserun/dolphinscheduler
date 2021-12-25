@@ -30,7 +30,7 @@ import org.apache.dolphinscheduler.dao.mapper.DataSourceUserMapper;
 import org.apache.dolphinscheduler.plugin.datasource.api.plugin.DataSourcePluginManager;
 import org.apache.dolphinscheduler.plugin.datasource.api.provider.DataSourceParam;
 import org.apache.dolphinscheduler.plugin.datasource.api.utils.CommonUtils;
-import org.apache.dolphinscheduler.plugin.datasource.api.utils.DataSourceUtils;
+import org.apache.dolphinscheduler.plugin.datasource.api.provider.JdbcDataSourceProvider;
 import org.apache.dolphinscheduler.plugin.datasource.api.utils.PasswordUtils;
 import org.apache.dolphinscheduler.spi.datasource.JdbcConnectionParam;
 import org.apache.dolphinscheduler.spi.enums.DbType;
@@ -58,7 +58,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
  */
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({"sun.security.*", "javax.net.*"})
-@PrepareForTest({DataSourceUtils.class, CommonUtils.class, DataSourcePluginManager.class, PasswordUtils.class})
+@PrepareForTest({JdbcDataSourceProvider.class, CommonUtils.class, DataSourcePluginManager.class, PasswordUtils.class})
 public class DataSourceServiceTest {
 
     @InjectMocks
@@ -94,7 +94,7 @@ public class DataSourceServiceTest {
         Result dataSourceExitsResult = dataSourceService.createDataSource(loginUser, postgreSqlDatasourceParam);
         Assert.assertEquals(Status.DATASOURCE_EXIST.getCode(), dataSourceExitsResult.getCode().intValue());
 
-        JdbcConnectionParam jdbcConnectionParam = DataSourceUtils.buildConnectionParams(postgreSqlDatasourceParam);
+        JdbcConnectionParam jdbcConnectionParam = JdbcDataSourceProvider.buildConnectionParams(postgreSqlDatasourceParam);
         // data source exits
         PowerMockito.when(dataSourceMapper.queryDataSourceByName(dataSourceName.trim())).thenReturn(null);
         Result connectionResult = new Result(Status.DATASOURCE_CONNECT_FAILED.getCode(), Status.DATASOURCE_CONNECT_FAILED.getMsg());
@@ -155,7 +155,7 @@ public class DataSourceServiceTest {
         Assert.assertEquals(Status.DATASOURCE_EXIST.getCode(), dataSourceNameExist.getCode().intValue());
 
         // data source connect failed
-        JdbcConnectionParam connectionParam = DataSourceUtils.buildConnectionParams(postgreSqlDatasourceParam);
+        JdbcConnectionParam connectionParam = JdbcDataSourceProvider.buildConnectionParams(postgreSqlDatasourceParam);
         PowerMockito.when(dataSourceMapper.selectById(dataSourceId)).thenReturn(dataSource);
         PowerMockito.when(dataSourceMapper.queryDataSourceByName(dataSourceName)).thenReturn(null);
         Result connectionResult = new Result(Status.SUCCESS.getCode(), Status.SUCCESS.getMsg());
@@ -305,7 +305,7 @@ public class DataSourceServiceTest {
         props.put("jdbcUrl", "jdbc:oracle:thin:@//192.168.9.1:1521/im");
         datasourceParam.setProps(props);
 
-        JdbcConnectionParam connectionParam = DataSourceUtils.buildConnectionParams(datasourceParam);
+        JdbcConnectionParam connectionParam = JdbcDataSourceProvider.buildConnectionParams(datasourceParam);
         String expected = "{\"dbType\":\"ORACLE\",\"jdbcUrl\":\"jdbc:oracle:thin:@//192.168.9.1:1521/im\",\"user\":\"test\",\"password\":\"test\",\"driverClassName\":\"oracle.jdbc.OracleDriver\"}";
         Assert.assertEquals(expected, JSONUtils.toJsonString(connectionParam));
 
@@ -326,7 +326,7 @@ public class DataSourceServiceTest {
         props.put("props", otherProps);
         dataSourceParam.setProps(props);
 
-        connectionParam = DataSourceUtils.buildConnectionParams(dataSourceParam);
+        connectionParam = JdbcDataSourceProvider.buildConnectionParams(dataSourceParam);
 
         expected = "{\"dbType\":\"HIVE\",\"jdbcUrl\":\"jdbc:hive2://192.168.9.1:10000/im\",\"user\":\"test\",\"password\":\"test\",\"driverClassName\":\"org.apache.hive.jdbc.HiveDriver\",\"props\":{\"kerberosKrb5Conf\":\"/opt/krb5.conf\",\"kerberosPrincipal\":\"hive/hdfs-mycluster@ESZ.COM\",\"kerberosKeytab\":\"/opt/hdfs.headless.keytab\"}}";
         Assert.assertEquals(expected, JSONUtils.toJsonString(connectionParam));
@@ -348,7 +348,7 @@ public class DataSourceServiceTest {
         props.put("password", "123456");
         props.put("props", other);
         dataSourceParam.setProps(props);
-        JdbcConnectionParam connectionParam = DataSourceUtils.buildConnectionParams(dataSourceParam);
+        JdbcConnectionParam connectionParam = JdbcDataSourceProvider.buildConnectionParams(dataSourceParam);
         String expected = "{\"dbType\":\"MYSQL\",\"jdbcUrl\":\"jdbc:mysql://172.16.133.200:3306/dolphinscheduler\",\"user\":\"test\",\"password\":\"IUAjJCVeJipNVEl6TkRVMg==\",\"driverClassName\":\"com.mysql.jdbc.Driver\",\"props\":{\"autoDeserialize\":\"yes\",\"allowUrlInLocalInfile\":\"true\"}}";
         Assert.assertEquals(expected, JSONUtils.toJsonString(connectionParam));
 
@@ -359,7 +359,7 @@ public class DataSourceServiceTest {
         props.put("user", "test");
         props.put("password", "123456");
         dataSourceParam.setProps(props);
-        connectionParam = DataSourceUtils.buildConnectionParams(dataSourceParam);
+        connectionParam = JdbcDataSourceProvider.buildConnectionParams(dataSourceParam);
         expected = "{\"dbType\":\"MYSQL\",\"jdbcUrl\":\"jdbc:mysql://172.16.133.200:3306/dolphinscheduler\",\"user\":\"test\",\"password\":\"123456\",\"driverClassName\":\"com.mysql.jdbc.Driver\",\"props\":{\"autoDeserialize\":\"yes\",\"allowUrlInLocalInfile\":\"true\"}}";
         Assert.assertEquals(expected, JSONUtils.toJsonString(connectionParam));
     }
@@ -395,9 +395,9 @@ public class DataSourceServiceTest {
         props.put("user", "postgres");
         props.put("password", "");
         postgreSqlDatasourceParam.setProps(props);
-        JdbcConnectionParam connectionParam = DataSourceUtils.buildConnectionParams(postgreSqlDatasourceParam);
+        JdbcConnectionParam connectionParam = JdbcDataSourceProvider.buildConnectionParams(postgreSqlDatasourceParam);
 
-        PowerMockito.mockStatic(DataSourceUtils.class);
+        PowerMockito.mockStatic(JdbcDataSourceProvider.class);
         PowerMockito.mockStatic(DataSourcePluginManager.class);
         DataSourcePluginManager dataSourcePluginManager = PowerMockito.mock(DataSourcePluginManager.class);
 

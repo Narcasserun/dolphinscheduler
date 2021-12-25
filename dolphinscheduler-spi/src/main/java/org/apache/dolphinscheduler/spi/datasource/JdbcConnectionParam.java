@@ -21,7 +21,7 @@ import org.apache.dolphinscheduler.spi.enums.DbType;
 import org.apache.dolphinscheduler.spi.utils.StringUtils;
 
 import java.text.MessageFormat;
-import java.util.Properties;
+import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -56,7 +56,7 @@ public class JdbcConnectionParam {
 
     private String kerberosKrb5Conf;
 
-    private Properties props;
+    private Map<String, String> props;
 
     public String getDatasourceUniqueId() {
         String name = StringUtils.isBlank(getKerberosPrincipal()) ? getUser() : getKerberosPrincipal();
@@ -119,11 +119,11 @@ public class JdbcConnectionParam {
         this.driverClassName = driverClassName;
     }
 
-    public Properties getProps() {
+    public Map<String, String> getProps() {
         return props;
     }
 
-    public void setProps(Properties props) {
+    public void setProps(Map<String, String> props) {
         this.props = props;
     }
 

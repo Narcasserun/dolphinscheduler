@@ -22,7 +22,7 @@ import static org.apache.dolphinscheduler.spi.task.TaskConstants.EXIT_CODE_FAILU
 import static org.apache.dolphinscheduler.spi.task.TaskConstants.RWXR_XR_X;
 
 import org.apache.dolphinscheduler.plugin.datasource.api.plugin.DataSourcePluginManager;
-import org.apache.dolphinscheduler.plugin.datasource.api.utils.DataSourceUtils;
+import org.apache.dolphinscheduler.plugin.datasource.api.provider.JdbcDataSourceProvider;
 import org.apache.dolphinscheduler.plugin.task.api.AbstractTaskExecutor;
 import org.apache.dolphinscheduler.plugin.task.api.ShellCommandExecutor;
 import org.apache.dolphinscheduler.plugin.task.api.TaskResponse;
@@ -235,10 +235,10 @@ public class DataxTask extends AbstractTaskExecutor {
      */
     private List<ObjectNode> buildDataxJobContentJson() {
         DataxTaskExecutionContext dataxTaskExecutionContext = taskExecutionContext.getDataxTaskExecutionContext();
-        JdbcConnectionParam dataSourceCfg = DataSourceUtils.buildConnectionParams(
+        JdbcConnectionParam dataSourceCfg = JdbcDataSourceProvider.buildConnectionParams(
                 dataxTaskExecutionContext.getSourceConnectionParams());
 
-        JdbcConnectionParam dataTargetCfg = DataSourceUtils.buildConnectionParams(
+        JdbcConnectionParam dataTargetCfg = JdbcDataSourceProvider.buildConnectionParams(
                 dataxTaskExecutionContext.getTargetConnectionParams());
 
         List<ObjectNode> readerConnArr = new ArrayList<>();

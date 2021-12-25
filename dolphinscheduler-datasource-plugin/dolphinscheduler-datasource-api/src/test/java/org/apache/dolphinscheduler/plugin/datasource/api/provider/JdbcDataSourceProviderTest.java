@@ -17,7 +17,20 @@
 
 package org.apache.dolphinscheduler.plugin.datasource.api.provider;
 
+import org.apache.dolphinscheduler.plugin.datasource.api.plugin.DataSourceClientProvider;
+import org.apache.dolphinscheduler.plugin.datasource.api.plugin.DataSourcePluginManager;
+import org.apache.dolphinscheduler.plugin.datasource.api.utils.CommonUtils;
+import org.apache.dolphinscheduler.plugin.datasource.api.utils.PasswordUtils;
 import org.apache.dolphinscheduler.spi.datasource.JdbcConnectionParam;
+import org.apache.dolphinscheduler.spi.enums.DbType;
+import org.apache.dolphinscheduler.spi.utils.JSONUtils;
+
+import org.apache.commons.dbcp2.BasicDataSource;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -27,26 +40,63 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import com.zaxxer.hikari.HikariDataSource;
-
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(value = {HikariDataSource.class, JdbcDataSourceProvider.class})
+@PrepareForTest({JdbcDataSourceProvider.class, BasicDataSource.class,  DriverManager.class, DataSourceClientProvider.class,
+        PasswordUtils.class, CommonUtils.class, DataSourcePluginManager.class})
 public class JdbcDataSourceProviderTest {
 
     @Test
-    public void testCreateJdbcDataSource() {
+    public void testGetDataSourceFactory() {
         PowerMockito.mockStatic(JdbcDataSourceProvider.class);
-        HikariDataSource dataSource = PowerMockito.mock(HikariDataSource.class);
-        PowerMockito.when(JdbcDataSourceProvider.createJdbcDataSource(Mockito.any())).thenReturn(dataSource);
-        Assert.assertNotNull(JdbcDataSourceProvider.createJdbcDataSource(new JdbcConnectionParam()));
+        DataSourceFactory dataSourceFactoryBasic = PowerMockito.mock(DataSourceFactoryBasicImpl.class);
+        PowerMockito.when(JdbcDataSourceProvider.getDataSourceFactory()).thenReturn(dataSourceFactoryBasic);
+        Assert.assertNotNull(JdbcDataSourceProvider.getDataSourceFactory());
     }
 
     @Test
-    public void testCreateOneSessionJdbcDataSource() {
-        PowerMockito.mockStatic(JdbcDataSourceProvider.class);
-        HikariDataSource dataSource = PowerMockito.mock(HikariDataSource.class);
-        PowerMockito.when(JdbcDataSourceProvider.createOneSessionJdbcDataSource(Mockito.any())).thenReturn(dataSource);
-        Assert.assertNotNull(JdbcDataSourceProvider.createOneSessionJdbcDataSource(new JdbcConnectionParam()));
+    public void testBuildConnectionParams() {
+        DataSourceParam mysqlDatasourceParam = new DataSourceParam();
+        mysqlDatasourceParam.setDbType(DbType.MYSQL);
+        Map<String, Object> props = new HashMap<>();
+        props.put("jdbcUrl", "jdbc:postgresql://172.16.133.200:3306/dolphinscheduler");
+        props.put("user", "mysql");
+        props.put("password", "123456");
+        mysqlDatasourceParam.setProps(props);
+        PowerMockito.mockStatic(PasswordUtils.class);
+        PowerMockito.when(PasswordUtils.encodePassword(Mockito.anyString())).thenReturn("123456");
+        PowerMockito.mockStatic(CommonUtils.class);
+        PowerMockito.when(CommonUtils.getKerberosStartupState()).thenReturn(false);
+        JdbcConnectionParam connectionParam = JdbcDataSourceProvider.buildConnectionParams(mysqlDatasourceParam);
+        Assert.assertNotNull(connectionParam);
+    }
+
+    @Test
+    public void testBuildConnectionParams2() {
+        DataSourceParam mysqlDatasourceParam = new DataSourceParam();
+        mysqlDatasourceParam.setDbType(DbType.POSTGRESQL);
+        Map<String, Object> props = new HashMap<>();
+        props.put("jdbcUrl", "jdbc:mysql://172.16.133.200:5432/dolphinscheduler");
+        props.put("user", "postgres");
+        props.put("password", "");
+        mysqlDatasourceParam.setProps(props);
+        JdbcConnectionParam connectionParam = JdbcDataSourceProvider.buildConnectionParams(JSONUtils.toJsonString(mysqlDatasourceParam));
+        Assert.assertNotNull(connectionParam);
+    }
+
+    @Test
+    public void testGetConnection() {
+
+        PowerMockito.mockStatic(DataSourcePluginManager.class);
+        Connection connection = PowerMockito.mock(Connection.class);
+        PowerMockito.when(DataSourcePluginManager.getConnection(Mockito.any())).thenReturn(connection);
+
+        JdbcConnectionParam connectionParam = new JdbcConnectionParam();
+        connectionParam.setUser("root");
+        connectionParam.setPassword("123456");
+        connection = DataSourcePluginManager.getConnection(connectionParam);
+
+        Assert.assertNotNull(connection);
+
     }
 
 }

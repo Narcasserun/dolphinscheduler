@@ -22,7 +22,7 @@ import static org.apache.dolphinscheduler.spi.task.TaskConstants.EXIT_CODE_SUCCE
 import static org.apache.dolphinscheduler.spi.task.TaskConstants.TASK_LOG_INFO_FORMAT;
 
 import org.apache.dolphinscheduler.plugin.datasource.api.plugin.DataSourcePluginManager;
-import org.apache.dolphinscheduler.plugin.datasource.api.utils.DataSourceUtils;
+import org.apache.dolphinscheduler.plugin.datasource.api.provider.JdbcDataSourceProvider;
 import org.apache.dolphinscheduler.plugin.task.api.AbstractTaskExecutor;
 import org.apache.dolphinscheduler.spi.datasource.JdbcConnectionParam;
 import org.apache.dolphinscheduler.spi.enums.DataType;
@@ -99,7 +99,7 @@ public class ProcedureTask extends AbstractTaskExecutor {
         try {
             // load class
             // get datasource
-            JdbcConnectionParam connectionParam = DataSourceUtils.buildConnectionParams(
+            JdbcConnectionParam connectionParam = JdbcDataSourceProvider.buildConnectionParams(
                     taskExecutionContext.getProcedureTaskExecutionContext().getConnectionParams());
 
             // get jdbc connection

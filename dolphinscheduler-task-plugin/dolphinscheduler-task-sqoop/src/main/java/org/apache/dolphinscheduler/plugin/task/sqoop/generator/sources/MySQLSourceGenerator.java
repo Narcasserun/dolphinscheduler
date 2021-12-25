@@ -34,7 +34,7 @@ import static org.apache.dolphinscheduler.spi.task.TaskConstants.DOUBLE_QUOTES;
 import static org.apache.dolphinscheduler.spi.task.TaskConstants.EQUAL_SIGN;
 import static org.apache.dolphinscheduler.spi.task.TaskConstants.SPACE;
 
-import org.apache.dolphinscheduler.plugin.datasource.api.utils.DataSourceUtils;
+import org.apache.dolphinscheduler.plugin.datasource.api.provider.JdbcDataSourceProvider;
 import org.apache.dolphinscheduler.plugin.task.sqoop.SqoopQueryType;
 import org.apache.dolphinscheduler.plugin.task.sqoop.generator.ISourceGenerator;
 import org.apache.dolphinscheduler.plugin.task.sqoop.parameter.SqoopParameters;
@@ -66,7 +66,7 @@ public class MySQLSourceGenerator implements ISourceGenerator {
             SourceMysqlParameter sourceMysqlParameter = JSONUtils.parseObject(sqoopParameters.getSourceParams(), SourceMysqlParameter.class);
 
             if (null != sourceMysqlParameter) {
-                JdbcConnectionParam baseDataSource =  DataSourceUtils.buildConnectionParams(
+                JdbcConnectionParam baseDataSource =  JdbcDataSourceProvider.buildConnectionParams(
                         taskExecutionContext.getSqoopTaskExecutionContext().getSourceConnectionParams());
 
                 if (null != baseDataSource) {

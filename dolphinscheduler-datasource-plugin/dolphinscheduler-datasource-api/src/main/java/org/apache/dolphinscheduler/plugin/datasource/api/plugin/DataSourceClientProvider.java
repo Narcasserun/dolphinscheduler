@@ -57,18 +57,9 @@ public class DataSourceClientProvider {
         logger.info("Creating the ClassLoader for the jdbc driver and plugin.");
         ClassLoader driverClassLoader = getDriverClassLoader(connectionParam);
 
-//        ClassLoader threadClassLoader = Thread.currentThread().getContextClassLoader();
-//
-//        try {
-//            Thread.currentThread().setContextClassLoader(driverClassLoader);
-//            return createDataSourceClientWithClassLoader(connectionParam, driverClassLoader);
-//        } finally {
-//            Thread.currentThread().setContextClassLoader(threadClassLoader);
-//        }
         try (ThreadContextClassLoader ignored = new ThreadContextClassLoader(driverClassLoader)) {
             return createDataSourceClientWithClassLoader(connectionParam);
         }
-
     }
 
     protected static void checkDriverLocation(JdbcConnectionParam connectionParam) {
@@ -173,44 +164,4 @@ public class DataSourceClientProvider {
         }
         return dataSourceClient;
     }
-
-//    protected static DataSourceClient createDataSourceClientWithClassLoader(JdbcConnectionParam connectionParam, ClassLoader classLoader) {
-//
-//        Class<?> dataSourceClientClass;
-//        DataSourceClient dataSourceClient;
-//        try {
-//            switch (connectionParam.getDbType()) {
-//                case MYSQL:
-//                    dataSourceClientClass = Class.forName("org.apache.dolphinscheduler.plugin.datasource.mysql.MySQLDataSourceClient", true, classLoader);
-//                    break;
-//                case POSTGRESQL:
-//                    dataSourceClientClass = Class.forName(String.format("%sPostgreSQLDataSourceClient", BASE_PACKAGE), true, classLoader);
-//                    break;
-//                case HIVE:
-//                case SPARK:
-//                    dataSourceClientClass = Class.forName("org.apache.dolphinscheduler.plugin.datasource.hive.HiveDataSourceClient", true, classLoader);
-//                    break;
-//                case CLICKHOUSE:
-//                    dataSourceClientClass = Class.forName(String.format("%sClickhouseDataSourceClient", BASE_PACKAGE), true, classLoader);
-//                    break;
-//                case ORACLE:
-//                    dataSourceClientClass = Class.forName(String.format("%sOracleDataSourceClient", BASE_PACKAGE), true, classLoader);
-//                    break;
-//                case SQLSERVER:
-//                    dataSourceClientClass = Class.forName(String.format("%sSqlserverDataSourceClient", BASE_PACKAGE), true, classLoader);
-//                    break;
-//                case DB2:
-//                    dataSourceClientClass = Class.forName(String.format("%sDB2DataSourceClient", BASE_PACKAGE), true, classLoader);
-//                    break;
-//                default:
-//                    throw DataSourceException.getInstance(String.format("datasource plugin '%s' is not found", connectionParam.getDbType().getDescp()));
-//            }
-//            logger.info("Reflection: {}", dataSourceClientClass);
-//            dataSourceClient = (DataSourceClient) ReflectionUtils.newInstance(dataSourceClientClass, connectionParam);
-//        } catch (Exception e) {
-//            throw DataSourceException.getInstance("Datasource plugin initialize fail", e);
-//        }
-//        logger.info("Create DataSourceClient {} for {} success.", connectionParam.getJdbcUrl(), connectionParam.getDbType().getDescp());
-//        return dataSourceClient;
-//    }
 }

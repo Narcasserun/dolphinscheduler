@@ -17,96 +17,64 @@
 
 package org.apache.dolphinscheduler.plugin.datasource.api.provider;
 
+import static org.apache.dolphinscheduler.spi.task.TaskConstants.HADOOP_SECURITY_AUTHENTICATION_STARTUP_STATE;
+
 import org.apache.dolphinscheduler.plugin.datasource.api.utils.PasswordUtils;
 import org.apache.dolphinscheduler.spi.datasource.JdbcConnectionParam;
-import org.apache.dolphinscheduler.spi.enums.DbType;
-import org.apache.dolphinscheduler.spi.utils.Constants;
+import org.apache.dolphinscheduler.spi.utils.JSONUtils;
 import org.apache.dolphinscheduler.spi.utils.PropertyUtils;
 import org.apache.dolphinscheduler.spi.utils.StringUtils;
 
-import java.sql.Driver;
+import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.zaxxer.hikari.HikariDataSource;
+import javax.sql.DataSource;
 
 /**
  * provider create Jdbc Data Source
  */
 public class JdbcDataSourceProvider {
 
-    private static final Logger logger = LoggerFactory.getLogger(JdbcDataSourceProvider.class);
+    public static final String USER = "user";
+    public static final String PASSWORD = "password";
+    public static final String JDBC_URL = "jdbcUrl";
+    public static final String DRIVER_CLASS_NAME = "driverClassName";
+    public static final String PROPS = "props";
+    public static final String KERBEROS_PRINCIPAL = "kerberosPrincipal";
+    public static final String KERBEROS_KEYTAB = "kerberosKeytab";
+    public static final String KERBEROS_KRB5CONF = "kerberosKrb5Conf";
 
-    public static HikariDataSource createJdbcDataSource(JdbcConnectionParam connectionParam) {
-        logger.info("Creating HikariDataSource pool for maxActive:{}", PropertyUtils.getInt(Constants.SPRING_DATASOURCE_MAX_ACTIVE, 50));
-        HikariDataSource dataSource = new HikariDataSource();
-
-        //TODO Support multiple versions of data sources
-        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        loaderJdbcDriver(classLoader, connectionParam);
-
-        dataSource.setDriverClassName(connectionParam.getDriverClassName());
-        dataSource.setJdbcUrl(connectionParam.getJdbcUrl());
-        dataSource.setUsername(connectionParam.getUser());
-        dataSource.setPassword(PasswordUtils.decodePassword(connectionParam.getPassword()));
-
-        dataSource.setMinimumIdle(PropertyUtils.getInt(Constants.SPRING_DATASOURCE_MIN_IDLE, 5));
-        dataSource.setMaximumPoolSize(PropertyUtils.getInt(Constants.SPRING_DATASOURCE_MAX_ACTIVE, 50));
-        dataSource.setConnectionTestQuery(connectionParam.getValidationQuery());
-
-        if (connectionParam.getProps() != null) {
-            dataSource.setDataSourceProperties(connectionParam.getProps());
-        }
-
-        logger.info("Creating HikariDataSource pool success.");
-        return dataSource;
+    public static DataSourceFactory<? extends DataSource> getDataSourceFactory() {
+        return new DataSourceFactoryBasicImpl();
     }
 
     /**
-     * @return One Session Jdbc DataSource
+     * build JDBC connection parameters
+     *
+     * @param dataSourceParam datasourceParam
      */
-    public static HikariDataSource createOneSessionJdbcDataSource(JdbcConnectionParam connectionParam) {
-        logger.info("Creating OneSession HikariDataSource pool for maxActive:{}", PropertyUtils.getInt(Constants.SPRING_DATASOURCE_MAX_ACTIVE, 50));
+    public static JdbcConnectionParam buildConnectionParams(DataSourceParam dataSourceParam) {
+        JdbcConnectionParam jdbcConnectionParam = new JdbcConnectionParam();
+        jdbcConnectionParam.setDbType(dataSourceParam.getDbType());
+        jdbcConnectionParam.setJdbcUrl(dataSourceParam.getProps().get(JDBC_URL).toString());
+        jdbcConnectionParam.setUser(dataSourceParam.getProps().get(USER).toString());
+        jdbcConnectionParam.setPassword(PasswordUtils.encodePassword(dataSourceParam.getProps().get(PASSWORD).toString()));
+        String driverClassName = dataSourceParam.getProps().getOrDefault(DRIVER_CLASS_NAME, "").toString();
+        jdbcConnectionParam.setDriverClassName(StringUtils.isBlank(driverClassName) ? dataSourceParam.getDbType().getDefaultDriverClass() : driverClassName);
 
-        HikariDataSource dataSource = new HikariDataSource();
-
-        dataSource.setDriverClassName(connectionParam.getDriverClassName());
-        dataSource.setJdbcUrl(connectionParam.getJdbcUrl());
-        dataSource.setUsername(connectionParam.getUser());
-        dataSource.setPassword(PasswordUtils.decodePassword(connectionParam.getPassword()));
-
-        dataSource.setMinimumIdle(1);
-        dataSource.setMaximumPoolSize(1);
-        dataSource.setConnectionTestQuery(connectionParam.getValidationQuery());
-
-        if (connectionParam.getProps() != null) {
-            dataSource.setDataSourceProperties(connectionParam.getProps());
+        Boolean kerberosStartupState = PropertyUtils.getBoolean(HADOOP_SECURITY_AUTHENTICATION_STARTUP_STATE, false);
+        if (kerberosStartupState) {
+            jdbcConnectionParam.setKerberosKeytab(dataSourceParam.getProps().get(KERBEROS_KEYTAB).toString());
+            jdbcConnectionParam.setKerberosKrb5Conf(dataSourceParam.getProps().get(KERBEROS_KRB5CONF).toString());
+            jdbcConnectionParam.setKerberosPrincipal(dataSourceParam.getProps().get(KERBEROS_PRINCIPAL).toString());
         }
-
-        logger.info("Creating OneSession HikariDataSource pool success.");
-        return dataSource;
+        Map<String, String> props = (Map<String, String>) dataSourceParam.getProps().get(PROPS);
+        if (props != null) {
+            jdbcConnectionParam.setProps(props);
+        }
+        return jdbcConnectionParam;
     }
 
-    protected static void loaderJdbcDriver(ClassLoader classLoader, JdbcConnectionParam connectionParam) {
-        String drv = StringUtils.isBlank(connectionParam.getDriverClassName()) ? connectionParam.getDbType().getDefaultDriverClass() : connectionParam.getDriverClassName();
-        try {
-            final Class<?> clazz = Class.forName(drv, true, classLoader);
-            final Driver driver = (Driver) clazz.newInstance();
-            if (!driver.acceptsURL(connectionParam.getJdbcUrl())) {
-                logger.warn("Jdbc driver loading error. Driver {} cannot accept url.", drv);
-                throw new RuntimeException("Jdbc driver loading error.");
-            }
-            if (connectionParam.getDbType().equals(DbType.MYSQL)) {
-                if (driver.getMajorVersion() >= 8) {
-                    connectionParam.setDriverClassName(drv);
-                } else {
-                    connectionParam.setDriverClassName(Constants.COM_MYSQL_JDBC_DRIVER);
-                }
-            }
-        } catch (final Exception e) {
-            logger.warn("The specified driver not suitable.");
-        }
+    public static JdbcConnectionParam buildConnectionParams(String connectionJson) {
+        return JSONUtils.parseObject(connectionJson, JdbcConnectionParam.class);
     }
-
 }

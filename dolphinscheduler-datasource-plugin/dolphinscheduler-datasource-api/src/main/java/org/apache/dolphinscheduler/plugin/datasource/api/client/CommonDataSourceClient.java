@@ -17,7 +17,7 @@
 
 package org.apache.dolphinscheduler.plugin.datasource.api.client;
 
-import org.apache.dolphinscheduler.plugin.datasource.api.provider.JdbcDataSourceProvider2;
+import org.apache.dolphinscheduler.plugin.datasource.api.provider.JdbcDataSourceProvider;
 import org.apache.dolphinscheduler.spi.datasource.DataSourceClient;
 import org.apache.dolphinscheduler.spi.datasource.JdbcConnectionParam;
 import org.apache.dolphinscheduler.spi.utils.StringUtils;
@@ -64,7 +64,7 @@ public class CommonDataSourceClient implements DataSourceClient {
     }
 
     protected void initClient(JdbcConnectionParam connectionParam) {
-        this.dataSource = JdbcDataSourceProvider2.createJdbcDataSource(connectionParam);
+        this.dataSource = JdbcDataSourceProvider.getDataSourceFactory().createDataSource(connectionParam);
         this.jdbcTemplate = new JdbcTemplate(dataSource);
     }
 
@@ -121,6 +121,7 @@ public class CommonDataSourceClient implements DataSourceClient {
     @Override
     public void close() {
         logger.info("do close dataSource.");
+        JdbcDataSourceProvider.getDataSourceFactory().destroy(this.dataSource);
         this.dataSource = null;
         this.jdbcTemplate = null;
     }

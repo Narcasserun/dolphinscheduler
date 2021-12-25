@@ -29,7 +29,7 @@ import org.apache.dolphinscheduler.dao.mapper.DataSourceMapper;
 import org.apache.dolphinscheduler.dao.mapper.DataSourceUserMapper;
 import org.apache.dolphinscheduler.plugin.datasource.api.plugin.DataSourcePluginManager;
 import org.apache.dolphinscheduler.plugin.datasource.api.provider.DataSourceParam;
-import org.apache.dolphinscheduler.plugin.datasource.api.utils.DataSourceUtils;
+import org.apache.dolphinscheduler.plugin.datasource.api.provider.JdbcDataSourceProvider;
 import org.apache.dolphinscheduler.spi.datasource.JdbcConnectionParam;
 
 import org.apache.commons.lang.StringUtils;
@@ -84,7 +84,7 @@ public class DataSourceServiceImpl extends BaseServiceImpl implements DataSource
             return result;
         }
         // check connect
-        JdbcConnectionParam jdbcConnectionParam = DataSourceUtils.buildConnectionParams(datasourceParam);
+        JdbcConnectionParam jdbcConnectionParam = JdbcDataSourceProvider.buildConnectionParams(datasourceParam);
         Result<Object> isConnection = checkConnection(jdbcConnectionParam);
         if (Status.SUCCESS.getCode() != isConnection.getCode()) {
             putMsg(result, Status.DATASOURCE_CONNECT_FAILED);
@@ -142,7 +142,7 @@ public class DataSourceServiceImpl extends BaseServiceImpl implements DataSource
             return result;
         }
         //check password，if the password is not updated, set to the old password.
-        JdbcConnectionParam jdbcConnectionParam = DataSourceUtils.buildConnectionParams(dataSourceParam);
+        JdbcConnectionParam jdbcConnectionParam = JdbcDataSourceProvider.buildConnectionParams(dataSourceParam);
         String password = jdbcConnectionParam.getPassword();
         if (StringUtils.isBlank(password)) {
             String oldConnectionParams = dataSource.getConnectionParams();
@@ -338,7 +338,7 @@ public class DataSourceServiceImpl extends BaseServiceImpl implements DataSource
             putMsg(result, Status.RESOURCE_NOT_EXIST);
             return result;
         }
-        return checkConnection(DataSourceUtils.buildConnectionParams(dataSource.getConnectionParams()));
+        return checkConnection(JdbcDataSourceProvider.buildConnectionParams(dataSource.getConnectionParams()));
     }
 
     /**

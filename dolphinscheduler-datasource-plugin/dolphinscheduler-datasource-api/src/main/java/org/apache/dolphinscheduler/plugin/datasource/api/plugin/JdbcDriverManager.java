@@ -18,6 +18,7 @@
 package org.apache.dolphinscheduler.plugin.datasource.api.plugin;
 
 import org.apache.dolphinscheduler.spi.enums.DbType;
+import org.apache.dolphinscheduler.spi.utils.StringUtils;
 
 import java.io.File;
 import java.util.Arrays;
@@ -80,6 +81,10 @@ public class JdbcDriverManager {
      */
     public String getDefaultDriverPluginPath(String typeName) {
         SortedMap<String, String> drivers = jdbcDrivers.get(typeName);
+        String envDriverPath = String.format("%s/jdbc", getHiveEnv());
+        if (StringUtils.equalsIgnoreCase(typeName, DbType.HIVE.getDescp())) {
+            return StringUtils.isBlank(drivers.get(drivers.firstKey())) ? envDriverPath : drivers.get(drivers.firstKey());
+        }
         return drivers.get(drivers.firstKey());
     }
 
@@ -87,7 +92,7 @@ public class JdbcDriverManager {
         return String.format("%s/%s", this.pluginPath, type.getDescp());
     }
 
-    public String getHadoopClientPath() {
-        return System.getenv("HADOOP_CLIENT") == null ? String.format("%s/hadoop-client", System.getenv("DOLPHINSCHEDULER_HOME")) : System.getenv("HADOOP_CLIENT");
+    public String getHiveEnv() {
+        return System.getenv("HIVE_HOME") == null ? System.getenv("HIVE_CLIENT") : System.getenv("HIVE_HOME");
     }
 }
