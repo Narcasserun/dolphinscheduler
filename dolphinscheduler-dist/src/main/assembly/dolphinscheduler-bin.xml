@@ -75,6 +75,16 @@
             <outputDirectory>./plugin/mysql/</outputDirectory>
         </fileSet>
 
+        <!-- sqlserver -->
+        <fileSet>
+            <directory>${basedir}/../dolphinscheduler-datasource-plugin/dolphinscheduler-datasource-sqlserver/target/
+            </directory>
+            <includes>
+                <include>dolphinscheduler-datasource-sqlserver-${project.version}.jar</include>
+            </includes>
+            <outputDirectory>./plugin/sqlserver/</outputDirectory>
+        </fileSet>
+
         <fileSet>
             <directory>${basedir}/../dolphinscheduler-tools/target/tools</directory>
             <outputDirectory>tools</outputDirectory>
