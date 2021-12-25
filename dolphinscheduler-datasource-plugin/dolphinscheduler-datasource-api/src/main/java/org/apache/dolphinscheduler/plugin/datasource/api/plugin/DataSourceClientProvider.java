@@ -75,9 +75,11 @@ public class DataSourceClientProvider {
         ClassLoader threadClassLoader = Thread.currentThread().getContextClassLoader();
         ClassLoader classLoader;
 
-        String locationString = connectionParam.getDriverLocation();
-        logger.info("Driver location: {}", locationString);
-        HashSet<String> paths = Sets.newHashSet(locationString);
+        HashSet<String> paths = Sets.newHashSet();
+        if (StringUtils.isNotBlank(connectionParam.getDriverLocation())) {
+            logger.info("Driver location: {}", connectionParam.getDriverLocation());
+            paths.add(connectionParam.getDriverLocation());
+        }
         try {
             classLoader = ClassLoaderUtils.getCustomClassLoader(paths, threadClassLoader, filenameFilter);
         } catch (final MalformedURLException e) {
