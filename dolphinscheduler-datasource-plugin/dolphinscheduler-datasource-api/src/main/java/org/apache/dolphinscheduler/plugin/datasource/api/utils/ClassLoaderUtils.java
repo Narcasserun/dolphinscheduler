@@ -19,6 +19,8 @@ package org.apache.dolphinscheduler.plugin.datasource.api.utils;
 
 import org.apache.dolphinscheduler.spi.utils.StringUtils;
 
+import org.apache.commons.collections.CollectionUtils;
+
 import java.io.File;
 import java.io.FilenameFilter;
 import java.net.MalformedURLException;
@@ -42,7 +44,7 @@ public class ClassLoaderUtils {
 
     public static URL[] getURLsForClasspath(Set<String> modulePaths, FilenameFilter filenameFilter) throws MalformedURLException {
         Set<String> modules = new LinkedHashSet<>();
-        if (modulePaths != null) {
+        if (CollectionUtils.isNotEmpty(modulePaths)) {
             modulePaths.stream()
                     .flatMap(path -> Arrays.stream(path.split(",")))
                     .filter(StringUtils::isNotBlank)
@@ -54,7 +56,7 @@ public class ClassLoaderUtils {
 
     protected static URL[] toURLs(Set<String> modulePaths, FilenameFilter filenameFilter) throws MalformedURLException {
         List<URL> additionalClasspath = new LinkedList<>();
-        if (modulePaths != null) {
+        if (CollectionUtils.isNotEmpty(modulePaths)) {
             for (String modulePathString : modulePaths) {
                 File modulePath = new File(modulePathString);
                 if (modulePath.exists()) {
