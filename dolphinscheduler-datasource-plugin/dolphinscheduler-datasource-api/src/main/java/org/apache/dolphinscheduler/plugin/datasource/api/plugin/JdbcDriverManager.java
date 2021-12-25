@@ -83,9 +83,11 @@ public class JdbcDriverManager {
      */
     public String getDefaultDriverPluginPath(String typeName) {
         SortedMap<String, String> drivers = jdbcDrivers.get(typeName);
-        String envDriverPath = String.format("%s/jdbc", getHiveEnv());
-        if (MapUtils.isEmpty(drivers) && StringUtils.equalsIgnoreCase(typeName, DbType.HIVE.getDescp())) {
-            return envDriverPath;
+        if (MapUtils.isEmpty(drivers)) {
+            if (StringUtils.equalsIgnoreCase(typeName, DbType.HIVE.getDescp())) {
+                return String.format("%s/jdbc", getHiveEnv());
+            }
+            return null;
         }
         return drivers.get(drivers.firstKey());
     }
